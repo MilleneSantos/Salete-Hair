@@ -1,64 +1,178 @@
+"use client";
+
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
+
+const services = [
+  { name: "Escova", duration: "45 min" },
+  { name: "Manicure e Pedicure", duration: "60 min" },
+  { name: "Progressiva", duration: "120 min" },
+  { name: "Tratamento Capilar", duration: "30 min" },
+];
+
+const professionals = [
+  {
+    name: "Priscila",
+    role: "Especialista em escovas",
+    avatarClass: "avatar--gold",
+    initials: "P",
+  },
+  {
+    name: "Ines",
+    role: "Manicure e cabeleireira",
+    avatarClass: "avatar--rose",
+    initials: "I",
+  },
+  {
+    name: "Salete",
+    role: "Especialista em tratamentos",
+    avatarClass: "avatar--bronze",
+    initials: "S",
+  },
+];
+
+const timeSlots = ["09:00", "09:45", "10:30", "13:00", "13:30", "14:15", "15:00"];
+const selectedTime = "13:30";
+
+const screenDelay = (delay: string) => ({ "--delay": delay } as CSSProperties);
+
+function ScreenTop() {
+  return (
+    <div className="screen__top">
+      <button type="button" className="icon-button" aria-label="Voltar">
+        <span className="icon-arrow" aria-hidden="true" />
+      </button>
+      <span>Salete Santos</span>
+    </div>
+  );
+}
 
 export default function Home() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowSplash(false), 2400);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="app-shell">
+      {showSplash && (
+        <div className="splash" role="status" aria-live="polite">
+          <Image
+            src="/imagens/salete-logo.png"
+            alt="Salete Santos"
+            width={220}
+            height={220}
+            priority
+            className="splash__logo"
+          />
+        </div>
+      )}
+
+      <main className="showcase">
+        <section className="showcase__intro">
+          <span className="eyebrow">Sistema Salete</span>
+          <h1 className="showcase__title">Agendamentos premium para o seu espaco.</h1>
+          <p className="showcase__lead">
+            Um fluxo elegante para escolher servico, profissional e horario, com
+            confirmacao clara e contato imediato.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        </section>
+
+        <section className="showcase__screens">
+          <article className="screen" style={screenDelay("0s")}>
+            <ScreenTop />
+            <div>
+              <h2 className="screen__title">Agendamento</h2>
+              <p className="screen__subtitle">Escolha um servico</p>
+            </div>
+            <div className="list">
+              {services.map((service) => (
+                <button type="button" className="list-item" key={service.name}>
+                  <div>
+                    <div>{service.name}</div>
+                    <div className="list-item__meta">{service.duration}</div>
+                  </div>
+                  <span className="chevron" aria-hidden="true" />
+                </button>
+              ))}
+            </div>
+          </article>
+
+          <article className="screen" style={screenDelay("0.12s")}>
+            <ScreenTop />
+            <div>
+              <h2 className="screen__title">Selecione uma profissional</h2>
+              <p className="screen__subtitle">Escolha a profissional para &quot;Escova&quot;</p>
+            </div>
+            <div className="list">
+              {professionals.map((pro) => (
+                <button type="button" className="list-item" key={pro.name}>
+                  <div className="profile">
+                    <div className={`avatar ${pro.avatarClass}`} aria-hidden="true">
+                      {pro.initials}
+                    </div>
+                    <div>
+                      <div>{pro.name}</div>
+                      <div className="list-item__meta">{pro.role}</div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </article>
+
+          <article className="screen" style={screenDelay("0.24s")}>
+            <ScreenTop />
+            <div>
+              <h2 className="screen__title">Escolher horario</h2>
+              <p className="screen__subtitle">
+                Escolha o horario para fazer &quot;Escova&quot; com Priscila em 25/04
+              </p>
+            </div>
+            <div className="date-pill">
+              <span>quinta-feira, 25 abril</span>
+              <span className="chevron" aria-hidden="true" />
+            </div>
+            <div className="time-grid">
+              {timeSlots.map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  className={`chip ${slot === selectedTime ? "chip--active" : ""}`}
+                >
+                  {slot}
+                </button>
+              ))}
+            </div>
+            <button type="button" className="cta">
+              Confirmar agendamento
+            </button>
+          </article>
+
+          <article className="screen screen--sparkle" style={screenDelay("0.36s")}>
+            <ScreenTop />
+            <div>
+              <h2 className="screen__title">Agendamento confirmado!</h2>
+            </div>
+            <p className="muted">
+              Voce agendou <strong>Escova</strong> com <strong>Priscila</strong> em
+              quinta-feira, 25 abril as 10:30.
+            </p>
+            <p className="muted">Fique de olho no email para confirmar o atendimento.</p>
+            <button type="button" className="cta cta--whatsapp">
+              <span className="cta__icon" aria-hidden="true">
+                W
+              </span>
+              Chamar no WhatsApp
+            </button>
+            <p className="list-item__meta">
+              Para ajustes no horario, entre em contato com a equipe.
+            </p>
+          </article>
+        </section>
       </main>
     </div>
   );

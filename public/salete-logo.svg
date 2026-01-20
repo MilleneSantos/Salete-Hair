@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Salete Santos">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f5d07a" />
+      <stop offset="50%" stop-color="#c79b45" />
+      <stop offset="100%" stop-color="#7a5a22" />
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" fill="transparent" />
+
+  <text
+    x="50%"
+    y="18%"
+    text-anchor="middle"
+    font-family="Georgia, serif"
+    font-size="58"
+    letter-spacing="3"
+    fill="url(#gold)"
+    filter="url(#glow)"
+  >
+    Salete Santos
+  </text>
+
+  <circle cx="256" cy="258" r="140" stroke="url(#gold)" stroke-width="10" fill="none" />
+
+  <text
+    x="50%"
+    y="56%"
+    text-anchor="middle"
+    font-family="Georgia, serif"
+    font-size="160"
+    fill="url(#gold)"
+    filter="url(#glow)"
+  >
+    Ss
+  </text>
+
+  <text
+    x="50%"
+    y="82%"
+    text-anchor="middle"
+    font-family="Verdana, sans-serif"
+    font-size="30"
+    letter-spacing="6"
+    fill="#f6f1e6"
+  >
+    ESPACO DE BELEZA
+  </text>
+</svg>
