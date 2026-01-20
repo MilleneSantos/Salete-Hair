@@ -1,179 +1,57 @@
-"use client";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
+import { formatMinutes } from "@/lib/datetime";
+import { Screen } from "@/components/Screen";
 
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import type { CSSProperties } from "react";
+export const dynamic = "force-dynamic";
 
-const services = [
-  { name: "Escova", duration: "45 min" },
-  { name: "Manicure e Pedicure", duration: "60 min" },
-  { name: "Progressiva", duration: "120 min" },
-  { name: "Tratamento Capilar", duration: "30 min" },
-];
-
-const professionals = [
-  {
-    name: "Priscila",
-    role: "Especialista em escovas",
-    avatarClass: "avatar--gold",
-    initials: "P",
-  },
-  {
-    name: "Ines",
-    role: "Manicure e cabeleireira",
-    avatarClass: "avatar--rose",
-    initials: "I",
-  },
-  {
-    name: "Salete",
-    role: "Especialista em tratamentos",
-    avatarClass: "avatar--bronze",
-    initials: "S",
-  },
-];
-
-const timeSlots = ["09:00", "09:45", "10:30", "13:00", "13:30", "14:15", "15:00"];
-const selectedTime = "13:30";
-
-const screenDelay = (delay: string) => ({ "--delay": delay } as CSSProperties);
-
-function ScreenTop() {
-  return (
-    <div className="screen__top">
-      <button type="button" className="icon-button" aria-label="Voltar">
-        <span className="icon-arrow" aria-hidden="true" />
-      </button>
-      <span>Salete Santos</span>
-    </div>
-  );
-}
-
-export default function Home() {
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setShowSplash(false), 2400);
-    return () => window.clearTimeout(timer);
-  }, []);
+export default async function Home() {
+  const { data, error } = await supabase
+    .from("services")
+    .select("id,name,duration_minutes,duration")
+    .order("name");
 
   return (
-    <div className="app-shell">
-      {showSplash && (
-        <div className="splash" role="status" aria-live="polite">
-          <Image
-            src="/imagens/salete-logo.png"
-            alt="Salete Santos"
-            width={220}
-            height={220}
-            priority
-            className="splash__logo"
-          />
-        </div>
+    <Screen>
+      <header className="flex flex-col gap-2">
+        <span className="text-xs uppercase tracking-[0.3em] text-white/60">
+          Salete Santos
+        </span>
+        <h1 className="text-2xl font-semibold">Escolha um servico</h1>
+        <p className="text-sm text-white/70">
+          Selecione o servico para ver profissionais e horarios disponiveis.
+        </p>
+      </header>
+
+      {error && (
+        <p className="rounded border border-red-500/60 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+          Nao foi possivel carregar os servicos. Verifique o Supabase.
+        </p>
       )}
 
-      <main className="showcase">
-        <section className="showcase__intro">
-          <span className="eyebrow">Sistema Salete</span>
-          <h1 className="showcase__title">Agendamentos premium para o seu espaco.</h1>
-          <p className="showcase__lead">
-            Um fluxo elegante para escolher servico, profissional e horario, com
-            confirmacao clara e contato imediato.
-          </p>
-        </section>
-
-        <section className="showcase__screens">
-          <article className="screen" style={screenDelay("0s")}>
-            <ScreenTop />
-            <div>
-              <h2 className="screen__title">Agendamento</h2>
-              <p className="screen__subtitle">Escolha um servico</p>
-            </div>
-            <div className="list">
-              {services.map((service) => (
-                <button type="button" className="list-item" key={service.name}>
-                  <div>
-                    <div>{service.name}</div>
-                    <div className="list-item__meta">{service.duration}</div>
+      <div className="flex flex-col gap-3">
+        {(data ?? []).map((service) => {
+          const duration =
+            service.duration_minutes ?? service.duration ?? undefined;
+          return (
+            <Link
+              key={service.id}
+              href={`/profissional?service=${service.id}`}
+              className="flex items-center justify-between rounded-md border border-[#D4AF37]/60 px-4 py-3 transition hover:bg-white/5"
+            >
+              <div>
+                <div className="text-base">{service.name ?? "Servico"}</div>
+                {duration ? (
+                  <div className="text-xs text-white/60">
+                    {formatMinutes(duration)}
                   </div>
-                  <span className="chevron" aria-hidden="true" />
-                </button>
-              ))}
-            </div>
-          </article>
-
-          <article className="screen" style={screenDelay("0.12s")}>
-            <ScreenTop />
-            <div>
-              <h2 className="screen__title">Selecione uma profissional</h2>
-              <p className="screen__subtitle">Escolha a profissional para &quot;Escova&quot;</p>
-            </div>
-            <div className="list">
-              {professionals.map((pro) => (
-                <button type="button" className="list-item" key={pro.name}>
-                  <div className="profile">
-                    <div className={`avatar ${pro.avatarClass}`} aria-hidden="true">
-                      {pro.initials}
-                    </div>
-                    <div>
-                      <div>{pro.name}</div>
-                      <div className="list-item__meta">{pro.role}</div>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </article>
-
-          <article className="screen" style={screenDelay("0.24s")}>
-            <ScreenTop />
-            <div>
-              <h2 className="screen__title">Escolher horario</h2>
-              <p className="screen__subtitle">
-                Escolha o horario para fazer &quot;Escova&quot; com Priscila em 25/04
-              </p>
-            </div>
-            <div className="date-pill">
-              <span>quinta-feira, 25 abril</span>
-              <span className="chevron" aria-hidden="true" />
-            </div>
-            <div className="time-grid">
-              {timeSlots.map((slot) => (
-                <button
-                  key={slot}
-                  type="button"
-                  className={`chip ${slot === selectedTime ? "chip--active" : ""}`}
-                >
-                  {slot}
-                </button>
-              ))}
-            </div>
-            <button type="button" className="cta">
-              Confirmar agendamento
-            </button>
-          </article>
-
-          <article className="screen screen--sparkle" style={screenDelay("0.36s")}>
-            <ScreenTop />
-            <div>
-              <h2 className="screen__title">Agendamento confirmado!</h2>
-            </div>
-            <p className="muted">
-              Voce agendou <strong>Escova</strong> com <strong>Priscila</strong> em
-              quinta-feira, 25 abril as 10:30.
-            </p>
-            <p className="muted">Fique de olho no email para confirmar o atendimento.</p>
-            <button type="button" className="cta cta--whatsapp">
-              <span className="cta__icon" aria-hidden="true">
-                W
-              </span>
-              Chamar no WhatsApp
-            </button>
-            <p className="list-item__meta">
-              Para ajustes no horario, entre em contato com a equipe.
-            </p>
-          </article>
-        </section>
-      </main>
-    </div>
+                ) : null}
+              </div>
+              <span className="text-lg text-[#D4AF37]">{">"}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </Screen>
   );
 }
