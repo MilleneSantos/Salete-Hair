@@ -47,12 +47,11 @@ export async function POST(request: Request) {
 
   const { data: service } = await supabase
     .from("services")
-    .select("duration_minutes,duration")
+    .select("duration_minutes")
     .eq("id", serviceId)
     .maybeSingle();
 
-  const durationMinutes =
-    service?.duration_minutes ?? service?.duration ?? 0;
+  const durationMinutes = service?.duration_minutes ?? 0;
 
   if (!durationMinutes) {
     return NextResponse.json(

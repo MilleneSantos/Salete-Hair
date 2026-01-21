@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const { data, error } = await supabase
     .from("services")
-    .select("id,name,duration_minutes,duration")
+    .select("id,name,duration_minutes")
     .order("name");
 
   return (
@@ -31,8 +31,7 @@ export default async function Home() {
 
       <div className="flex flex-col gap-3">
         {(data ?? []).map((service) => {
-          const duration =
-            service.duration_minutes ?? service.duration ?? undefined;
+          const duration = service.duration_minutes ?? undefined;
           return (
             <Link
               key={service.id}

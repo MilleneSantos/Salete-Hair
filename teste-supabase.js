@@ -1,5 +1,5 @@
 const url =
-  "https://amouuywirdvgurihvl.supabase.co/rest/v1/services?select=id";
+  "https://amouuywlrdvlgurihvvl.supabase.co/rest/v1/services?select=id&limit=5";
 
 fetch(url, {
   headers: {
