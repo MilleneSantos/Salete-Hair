@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { formatLongDate } from "@/lib/datetime";
 import { Screen } from "@/components/Screen";
-import { Button } from "@/components/ui/Button";
+import { ButtonClient } from "@/components/ui/ButtonClient";
 
 type ServiceRow = {
   id: string;
@@ -109,9 +109,12 @@ export function ConfirmarClient() {
   return (
     <Screen>
       <header className="flex flex-col gap-2">
-        <Button href={`/horarios?service=${serviceId}&pro=${professionalId}`} variant="ghost">
+        <ButtonClient
+          href={`/horarios?service=${serviceId}&pro=${professionalId}`}
+          variant="ghost"
+        >
           Voltar
-        </Button>
+        </ButtonClient>
         <h1 className="text-2xl font-semibold">Confirmar agendamento</h1>
         <p className="text-sm text-white/70">
           {service?.name ?? "Servico"} com {professional?.name ?? "Profissional"}
@@ -159,9 +162,15 @@ export function ConfirmarClient() {
             </p>
           )}
 
-          <Button type="submit" variant="primary" size="lg" fullWidth loading={isSubmitting}>
+          <ButtonClient
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            loading={isSubmitting}
+          >
             {isSubmitting ? "Confirmando..." : "Confirmar"}
-          </Button>
+          </ButtonClient>
         </form>
     </Screen>
   );

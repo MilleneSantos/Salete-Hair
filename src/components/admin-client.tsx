@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { ButtonClient } from "@/components/ui/ButtonClient";
 import { formatTime } from "@/lib/datetime";
 
 type AppointmentView = {
@@ -148,7 +148,7 @@ export function AdminClient({
           </p>
         )}
 
-        <Button
+        <ButtonClient
           type="submit"
           variant="primary"
           size="lg"
@@ -156,7 +156,7 @@ export function AdminClient({
           loading={blockLoading}
         >
           {blockLoading ? "Bloqueando..." : "Criar bloqueio"}
-        </Button>
+        </ButtonClient>
       </form>
 
       <div className="flex flex-col gap-3">
@@ -192,7 +192,7 @@ export function AdminClient({
                 {appointment.client_name ?? "Cliente"} ·{" "}
                 {appointment.client_phone ?? "-"}
               </div>
-              <Button
+              <ButtonClient
                 type="button"
                 variant="outline"
                 size="md"
@@ -209,7 +209,7 @@ export function AdminClient({
                   : cancelId === appointment.id
                     ? "Cancelando..."
                     : "Cancelar"}
-              </Button>
+              </ButtonClient>
             </div>
           );
         })}

@@ -1,6 +1,9 @@
+"use client";
+
 import type {
   AnchorHTMLAttributes,
   ButtonHTMLAttributes,
+  MouseEvent,
   ReactNode,
 } from "react";
 
@@ -19,18 +22,12 @@ type CommonProps = {
 };
 
 type ButtonProps = CommonProps &
-  Omit<
-    ButtonHTMLAttributes<HTMLButtonElement>,
-    "className" | "disabled" | "onClick"
-  > & {
+  Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className" | "disabled"> & {
     href?: undefined;
   };
 
 type AnchorProps = CommonProps &
-  Omit<
-    AnchorHTMLAttributes<HTMLAnchorElement>,
-    "className" | "onClick" | "href"
-  > & {
+  Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "className" | "href"> & {
     href: string;
   };
 
@@ -83,7 +80,7 @@ function buildClasses(params: {
   return { classes, isDisabled };
 }
 
-export function Button(props: ButtonProps | AnchorProps) {
+export function ButtonClient(props: ButtonProps | AnchorProps) {
   const {
     variant = "secondary",
     size = "md",
@@ -107,13 +104,23 @@ export function Button(props: ButtonProps | AnchorProps) {
   });
 
   if ("href" in props && typeof props.href === "string") {
-    const { href, ...anchorProps } = props as AnchorProps;
+    const { href, onClick, ...anchorProps } = props as AnchorProps;
+
+    const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+      if (isDisabled) {
+        event.preventDefault();
+        return;
+      }
+      onClick?.(event);
+    };
+
     return (
       <a
         href={href}
         className={classes}
         aria-disabled={isDisabled}
         tabIndex={isDisabled ? -1 : undefined}
+        onClick={handleClick}
         {...anchorProps}
       >
         {children}
