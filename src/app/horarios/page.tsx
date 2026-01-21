@@ -38,7 +38,7 @@ export default async function HorariosPage({
   if (!serviceId || !professionalId) {
     return (
       <Screen>
-        <Link href="/" className="text-sm text-[#D4AF37]">
+        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
           Voltar
         </Link>
         <p className="text-sm text-white/70">Parametros incompletos.</p>
@@ -83,7 +83,7 @@ export default async function HorariosPage({
       <header className="flex flex-col gap-2">
         <Link
           href={`/profissional?service=${serviceId}`}
-          className="text-sm text-[#D4AF37]"
+          className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]"
         >
           Voltar
         </Link>
@@ -102,10 +102,11 @@ export default async function HorariosPage({
             const dayKey = formatDateKey(day);
             const dayHours = getBusinessHoursForDate(day, hoursData);
             const isSelected = dayKey === selectedDateKey;
-            const baseClasses = "rounded border px-3 py-2 text-xs transition";
+            const baseClasses =
+              "rounded-2xl border px-3 py-2 text-xs transition-colors min-h-[44px] flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10";
             const classes = isSelected
               ? `${baseClasses} border-[#D4AF37] text-[#D4AF37]`
-              : `${baseClasses} border-white/20 text-white/70 hover:border-[#D4AF37]/60`;
+              : `${baseClasses} border-white/20 text-white/70`;
 
             if (!dayHours) {
               return (
@@ -145,12 +146,12 @@ export default async function HorariosPage({
             Nenhum horario disponivel para este dia.
           </p>
         )}
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-3">
           {slots.map((slot) => (
             <Link
               key={slot}
               href={`/confirmar?service=${serviceId}&pro=${professionalId}&day=${selectedDateKey}&time=${slot}`}
-              className="rounded border border-[#D4AF37]/60 px-2 py-2 text-center text-sm transition hover:bg-white/5"
+              className="flex min-h-[44px] items-center justify-center rounded-2xl border border-[#D4AF37]/60 px-2 text-center text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10"
             >
               {slot}
             </Link>

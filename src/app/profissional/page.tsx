@@ -12,14 +12,16 @@ type ServiceRow = {
 export default async function ProfissionalPage({
   searchParams,
 }: {
-  searchParams: { service?: string };
+  searchParams: Promise<{ service?: string | string[] }>;
 }) {
-  const serviceId = searchParams.service;
+  const resolvedParams = await searchParams;
+  const serviceParam = resolvedParams.service;
+  const serviceId = Array.isArray(serviceParam) ? serviceParam[0] : serviceParam;
 
   if (!serviceId) {
     return (
       <Screen>
-        <Link href="/" className="text-sm text-[#D4AF37]">
+        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
           Voltar
         </Link>
         <p className="text-sm text-white/70">Servico nao informado.</p>
@@ -27,7 +29,7 @@ export default async function ProfissionalPage({
     );
   }
 
-  const { data: service } = await supabase
+  const { data: service, error: serviceError } = await supabase
     .from("services")
     .select("id,name")
     .eq("id", serviceId)
@@ -52,7 +54,7 @@ export default async function ProfissionalPage({
   return (
     <Screen>
       <header className="flex flex-col gap-2">
-        <Link href="/" className="text-sm text-[#D4AF37]">
+        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
           Voltar
         </Link>
         <h1 className="text-2xl font-semibold">Escolha a profissional</h1>
@@ -63,9 +65,19 @@ export default async function ProfissionalPage({
         </p>
       </header>
 
-      {(linksError || proError) && (
-        <p className="rounded border border-red-500/60 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+      {(serviceError || linksError || proError) && (
+        <p className="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           Nao foi possivel carregar as profissionais.
+          <span className="block text-xs text-red-100/80">
+            Detalhes:{" "}
+            {[
+              serviceError?.message,
+              linksError?.message,
+              proError?.message,
+            ]
+              .filter(Boolean)
+              .join(" | ") || "Erro desconhecido."}
+          </span>
         </p>
       )}
 
@@ -74,7 +86,7 @@ export default async function ProfissionalPage({
           <Link
             key={pro.id}
             href={`/horarios?service=${serviceId}&pro=${pro.id}`}
-            className="flex items-center justify-between rounded-md border border-[#D4AF37]/60 px-4 py-3 transition hover:bg-white/5"
+            className="flex min-h-[56px] items-center justify-between rounded-2xl border border-[#D4AF37]/60 px-4 py-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10"
           >
             <span className="text-base">{pro.name ?? "Profissional"}</span>
             <span className="text-lg text-[#D4AF37]">{">"}</span>

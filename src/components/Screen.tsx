@@ -7,9 +7,9 @@ type ScreenProps = {
 
 export function Screen({ children, className }: ScreenProps) {
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-[100dvh] bg-black text-white">
       <div
-        className={`mx-auto flex min-h-screen w-full max-w-md flex-col gap-6 px-5 pb-10 pt-6 ${
+        className={`mx-auto flex min-h-[100dvh] w-full max-w-md flex-col gap-6 px-6 pb-10 pt-6 ${
           className ?? ""
         }`}
       >

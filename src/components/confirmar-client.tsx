@@ -111,7 +111,7 @@ export function ConfirmarClient() {
       <header className="flex flex-col gap-2">
         <Link
           href={`/horarios?service=${serviceId}&pro=${professionalId}`}
-          className="text-sm text-[#D4AF37]"
+          className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]"
         >
           Voltar
         </Link>
@@ -125,51 +125,51 @@ export function ConfirmarClient() {
       </header>
 
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <label className="flex flex-col gap-2 text-sm">
-          Nome
-          <input
-            className="rounded border border-[#D4AF37]/60 bg-black px-3 py-2 text-white"
-            value={clientName}
-            onChange={(event) => setClientName(event.target.value)}
-            placeholder="Seu nome"
-            required
-          />
-        </label>
-        <label className="flex flex-col gap-2 text-sm">
-          Telefone
-          <input
-            className="rounded border border-[#D4AF37]/60 bg-black px-3 py-2 text-white"
-            value={clientPhone}
-            onChange={(event) => setClientPhone(event.target.value)}
-            placeholder="(11) 99999-0000"
-            required
-          />
-        </label>
-        <label className="flex flex-col gap-2 text-sm">
-          Email (opcional)
-          <input
-            className="rounded border border-[#D4AF37]/60 bg-black px-3 py-2 text-white"
-            value={clientEmail}
-            onChange={(event) => setClientEmail(event.target.value)}
-            placeholder="voce@email.com"
-            type="email"
-          />
-        </label>
+          <label className="flex flex-col gap-2 text-sm">
+            Nome
+            <input
+              className="min-h-[44px] rounded-2xl border border-[#D4AF37]/60 bg-black px-4 py-2 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
+              value={clientName}
+              onChange={(event) => setClientName(event.target.value)}
+              placeholder="Seu nome"
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            Telefone
+            <input
+              className="min-h-[44px] rounded-2xl border border-[#D4AF37]/60 bg-black px-4 py-2 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
+              value={clientPhone}
+              onChange={(event) => setClientPhone(event.target.value)}
+              placeholder="(11) 99999-0000"
+              required
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            Email (opcional)
+            <input
+              className="min-h-[44px] rounded-2xl border border-[#D4AF37]/60 bg-black px-4 py-2 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
+              value={clientEmail}
+              onChange={(event) => setClientEmail(event.target.value)}
+              placeholder="voce@email.com"
+              type="email"
+            />
+          </label>
 
-        {error && (
-          <p className="rounded border border-red-500/60 bg-red-500/10 px-3 py-2 text-sm text-red-200">
-            {error}
-          </p>
-        )}
+          {error && (
+            <p className="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+              {error}
+            </p>
+          )}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="rounded border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-black transition disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isSubmitting ? "Confirmando..." : "Confirmar"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="min-h-[44px] rounded-2xl border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white active:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSubmitting ? "Confirmando..." : "Confirmar"}
+          </button>
+        </form>
     </Screen>
   );
 }

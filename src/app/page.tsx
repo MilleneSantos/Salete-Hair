@@ -24,7 +24,7 @@ export default async function Home() {
       </header>
 
       {error && (
-        <p className="rounded border border-red-500/60 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+        <p className="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
           Nao foi possivel carregar os servicos. Verifique o Supabase.
         </p>
       )}
@@ -36,7 +36,7 @@ export default async function Home() {
             <Link
               key={service.id}
               href={`/profissional?service=${service.id}`}
-              className="flex items-center justify-between rounded-md border border-[#D4AF37]/60 px-4 py-3 transition hover:bg-white/5"
+              className="flex min-h-[56px] items-center justify-between rounded-2xl border border-[#D4AF37]/60 px-4 py-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10"
             >
               <div>
                 <div className="text-base">{service.name ?? "Servico"}</div>

@@ -36,7 +36,7 @@ export default async function SucessoPage({
   if (!appointmentId) {
     return (
       <Screen>
-        <Link href="/" className="text-sm text-[#D4AF37]">
+        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
           Voltar ao inicio
         </Link>
         <p className="text-sm text-white/70">Agendamento nao encontrado.</p>
@@ -100,7 +100,7 @@ export default async function SucessoPage({
         </p>
       </header>
 
-      <div className="rounded border border-[#D4AF37]/60 px-4 py-3">
+      <div className="rounded-2xl border border-[#D4AF37]/60 px-4 py-4">
         <div className="text-sm text-white/70">Servico</div>
         <div className="text-base">{service?.name ?? "-"}</div>
         <div className="mt-3 text-sm text-white/70">Profissional</div>
@@ -118,7 +118,7 @@ export default async function SucessoPage({
           href={whatsappHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-center text-sm font-semibold text-black"
+          className="flex min-h-[44px] items-center justify-center rounded-2xl border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-center text-sm font-semibold text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white active:opacity-90"
         >
           Chamar no WhatsApp
         </a>
@@ -128,7 +128,7 @@ export default async function SucessoPage({
         </p>
       )}
 
-      <Link href="/" className="text-center text-sm text-[#D4AF37]">
+      <Link href="/" className="inline-flex min-h-[44px] items-center justify-center text-center text-sm text-[#D4AF37]">
         Fazer novo agendamento
       </Link>
     </Screen>

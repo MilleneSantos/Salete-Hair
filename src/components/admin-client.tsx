@@ -87,7 +87,7 @@ export function AdminClient({
     <div className="flex flex-col gap-6">
       <form
         onSubmit={handleBlock}
-        className="flex flex-col gap-3 rounded border border-white/10 px-4 py-3"
+        className="flex flex-col gap-3 rounded-2xl border border-white/10 px-4 py-4"
       >
         <div className="text-sm font-semibold text-[#D4AF37]">
           Bloquear horario
@@ -95,7 +95,7 @@ export function AdminClient({
         <label className="flex flex-col gap-2 text-xs">
           Profissional (opcional)
           <select
-            className="rounded border border-[#D4AF37]/60 bg-black px-3 py-2 text-sm"
+            className="min-h-[44px] rounded-2xl border border-[#D4AF37]/60 bg-black px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
             value={blockProfessionalId}
             onChange={(event) => setBlockProfessionalId(event.target.value)}
           >
@@ -111,7 +111,7 @@ export function AdminClient({
           <label className="flex flex-col gap-2 text-xs">
             Inicio
             <input
-              className="rounded border border-[#D4AF37]/60 bg-black px-3 py-2 text-sm"
+              className="min-h-[44px] rounded-2xl border border-[#D4AF37]/60 bg-black px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
               type="time"
               step={600}
               value={blockStart}
@@ -122,7 +122,7 @@ export function AdminClient({
           <label className="flex flex-col gap-2 text-xs">
             Fim
             <input
-              className="rounded border border-[#D4AF37]/60 bg-black px-3 py-2 text-sm"
+              className="min-h-[44px] rounded-2xl border border-[#D4AF37]/60 bg-black px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
               type="time"
               step={600}
               value={blockEnd}
@@ -134,7 +134,7 @@ export function AdminClient({
         <label className="flex flex-col gap-2 text-xs">
           Motivo (opcional)
           <input
-            className="rounded border border-[#D4AF37]/60 bg-black px-3 py-2 text-sm"
+            className="min-h-[44px] rounded-2xl border border-[#D4AF37]/60 bg-black px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
             value={blockReason}
             onChange={(event) => setBlockReason(event.target.value)}
             placeholder="Ex: almoco"
@@ -142,7 +142,7 @@ export function AdminClient({
         </label>
 
         {blockError && (
-          <p className="rounded border border-red-500/60 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+          <p className="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-xs text-red-200">
             {blockError}
           </p>
         )}
@@ -150,7 +150,7 @@ export function AdminClient({
         <button
           type="submit"
           disabled={blockLoading}
-          className="rounded border border-[#D4AF37] bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"
+          className="min-h-[44px] rounded-2xl border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white active:opacity-90 disabled:opacity-60"
         >
           {blockLoading ? "Bloqueando..." : "Criar bloqueio"}
         </button>
@@ -169,7 +169,7 @@ export function AdminClient({
           return (
             <div
               key={appointment.id}
-              className="flex flex-col gap-2 rounded border border-white/10 px-4 py-3"
+              className="flex flex-col gap-2 rounded-2xl border border-white/10 px-4 py-4"
             >
               <div className="flex items-center justify-between text-sm">
                 <span className="text-[#D4AF37]">
@@ -193,7 +193,7 @@ export function AdminClient({
                 type="button"
                 onClick={() => handleCancel(appointment.id)}
                 disabled={appointment.status === "cancelled" || cancelId === appointment.id}
-                className="mt-2 rounded border border-[#D4AF37]/60 px-3 py-2 text-xs text-[#D4AF37] disabled:opacity-40"
+                className="mt-2 min-h-[44px] rounded-2xl border border-[#D4AF37]/60 px-4 py-2 text-xs text-[#D4AF37] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10 disabled:opacity-40"
               >
                 {appointment.status === "cancelled"
                   ? "Cancelado"

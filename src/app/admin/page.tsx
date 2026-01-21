@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatDateKey, formatLongDate } from "@/lib/datetime";
 import { AdminClient } from "@/components/admin-client";
+import { Screen } from "@/components/Screen";
 
 export const dynamic = "force-dynamic";
 
@@ -86,59 +87,57 @@ export default async function AdminPage({
   }));
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col gap-6 px-5 pb-10 pt-6">
-        <header className="flex flex-col gap-2">
-          <Link href="/" className="text-sm text-[#D4AF37]">
-            Voltar
-          </Link>
-          <h1 className="text-2xl font-semibold">Painel do salao</h1>
-          <p className="text-sm text-white/70">
-            {formatLongDate(new Date(`${selectedDate}T00:00:00-03:00`))}
-          </p>
-        </header>
+    <Screen>
+      <header className="flex flex-col gap-2">
+        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
+          Voltar
+        </Link>
+        <h1 className="text-2xl font-semibold">Painel do salao</h1>
+        <p className="text-sm text-white/70">
+          {formatLongDate(new Date(`${selectedDate}T00:00:00-03:00`))}
+        </p>
+      </header>
 
-        <form className="grid gap-3" method="GET">
-          <label className="flex flex-col gap-2 text-xs">
-            Dia
-            <input
-              className="rounded border border-[#D4AF37]/60 bg-black px-3 py-2 text-sm"
-              type="date"
-              name="day"
-              defaultValue={selectedDate}
-            />
-          </label>
-          <label className="flex flex-col gap-2 text-xs">
-            Visualizacao
-            <select
-              className="rounded border border-[#D4AF37]/60 bg-black px-3 py-2 text-sm"
-              name="pro"
-              defaultValue={selectedProfessional}
-            >
-              <option value="all">Salete (tudo)</option>
-              {(professionals as ProfessionalRow[] | null | undefined)?.map(
-                (pro) => (
-                  <option key={pro.id} value={pro.id}>
-                    {pro.name}
-                  </option>
-                ),
-              )}
-            </select>
-          </label>
-          <button
-            type="submit"
-            className="rounded border border-[#D4AF37] bg-[#D4AF37] px-4 py-2 text-sm font-semibold text-black"
+      <form className="grid gap-3" method="GET">
+        <label className="flex flex-col gap-2 text-xs">
+          Dia
+          <input
+            className="min-h-[44px] rounded-2xl border border-[#D4AF37]/60 bg-black px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
+            type="date"
+            name="day"
+            defaultValue={selectedDate}
+          />
+        </label>
+        <label className="flex flex-col gap-2 text-xs">
+          Visualizacao
+          <select
+            className="min-h-[44px] rounded-2xl border border-[#D4AF37]/60 bg-black px-4 py-2 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37]"
+            name="pro"
+            defaultValue={selectedProfessional}
           >
-            Atualizar
-          </button>
-        </form>
+            <option value="all">Salete (tudo)</option>
+            {(professionals as ProfessionalRow[] | null | undefined)?.map(
+              (pro) => (
+                <option key={pro.id} value={pro.id}>
+                  {pro.name}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
+        <button
+          type="submit"
+          className="min-h-[44px] rounded-2xl border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white active:opacity-90"
+        >
+          Atualizar
+        </button>
+      </form>
 
-        <AdminClient
-          appointments={viewAppointments}
-          professionals={(professionals ?? []) as ProfessionalRow[]}
-          selectedDate={selectedDate}
-        />
-      </div>
-    </main>
+      <AdminClient
+        appointments={viewAppointments}
+        professionals={(professionals ?? []) as ProfessionalRow[]}
+        selectedDate={selectedDate}
+      />
+    </Screen>
   );
 }
