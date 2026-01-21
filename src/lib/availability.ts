@@ -19,6 +19,13 @@ type Interval = {
   end: Date;
 };
 
+export function getLunchInterval(dateKey: string): Interval {
+  return {
+    start: toDateWithOffset(dateKey, "12:00"),
+    end: toDateWithOffset(dateKey, "13:00"),
+  };
+}
+
 function readDayIndex(row: BusinessHoursRow) {
   const raw =
     row.day_of_week ??
@@ -152,7 +159,7 @@ export function buildAvailableSlots(options: {
   const endOfDay = toDateWithOffset(dateKey, hours.close);
   const slotDurationMs = durationMinutes * 60 * 1000;
   const stepMs = SLOT_INTERVAL_MINUTES * 60 * 1000;
-  const intervals = [...appointments, ...blocks];
+  const intervals = [...appointments, ...blocks, getLunchInterval(dateKey)];
 
   const slots: string[] = [];
 

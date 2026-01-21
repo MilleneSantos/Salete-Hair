@@ -78,12 +78,13 @@ export default async function HorariosPage({
 
   const today = new Date();
   const days = Array.from({ length: 14 }, (_, index) => addDays(today, index));
-
-  const selectedDate =
-    days.find((day) => formatDateKey(day) === dayParam) ??
-    days.find((day) => getBusinessHoursForDate(day, hoursData)) ??
-    days[0];
-
+  const openDays = days.filter((day) => getBusinessHoursForDate(day, hoursData));
+  const dayFromParam = days.find((day) => formatDateKey(day) === dayParam);
+  const dayFromParamHours = dayFromParam
+    ? getBusinessHoursForDate(dayFromParam, hoursData)
+    : null;
+  const fallbackDate = days[0] ?? today;
+  const selectedDate = (dayFromParamHours ? dayFromParam : openDays[0]) ?? fallbackDate;
   const selectedDateKey = formatDateKey(selectedDate);
   const selectedHours = getBusinessHoursForDate(selectedDate, hoursData);
 
@@ -113,26 +114,14 @@ export default async function HorariosPage({
           Proximos dias
         </h2>
         <div className="flex flex-wrap gap-2">
-          {days.map((day) => {
+          {openDays.map((day) => {
             const dayKey = formatDateKey(day);
-            const dayHours = getBusinessHoursForDate(day, hoursData);
             const isSelected = dayKey === selectedDateKey;
             const baseClasses =
-              "rounded-2xl border px-3 py-2 text-xs transition-colors min-h-[44px] flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10";
+              "rounded-2xl border px-3 py-2 text-xs transition-colors min-h-[44px] flex items-center justify-center bg-white/10 text-white/80 border-[#D4AF37]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:opacity-90";
             const classes = isSelected
-              ? `${baseClasses} border-[#D4AF37] text-[#D4AF37]`
-              : `${baseClasses} border-white/20 text-white/70`;
-
-            if (!dayHours) {
-              return (
-                <span
-                  key={dayKey}
-                  className={`${baseClasses} border-white/10 text-white/30`}
-                >
-                  {formatDayLabel(day)} - Fechado
-                </span>
-              );
-            }
+              ? `${baseClasses} bg-[#D4AF37] text-black border-[#D4AF37]`
+              : baseClasses;
 
             return (
               <Link
@@ -166,7 +155,7 @@ export default async function HorariosPage({
             <Link
               key={slot}
               href={`/confirmar?service=${serviceId}&pro=${professionalId}&day=${selectedDateKey}&time=${slot}`}
-              className="flex min-h-[44px] items-center justify-center rounded-2xl border border-[#D4AF37]/60 px-2 text-center text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10"
+              className="flex min-h-[44px] items-center justify-center rounded-2xl border border-[#D4AF37]/40 bg-white/10 px-2 text-center text-sm text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:opacity-90"
             >
               {slot}
             </Link>

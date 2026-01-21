@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { getBusinessHoursForDate } from "@/lib/availability";
+import { getBusinessHoursForDate, getLunchInterval } from "@/lib/availability";
 import { toDateWithOffset } from "@/lib/datetime";
 
 type Payload = {
@@ -31,14 +31,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: mapping } = await supabase
+  const { data: mappings, error: mappingError } = await supabase
     .from("service_professionals")
     .select("id")
     .eq("service_id", serviceId)
     .eq("professional_id", professionalId)
-    .maybeSingle();
+    .limit(1);
 
-  if (!mapping) {
+  if (mappingError) {
+    return NextResponse.json(
+      { error: "Erro ao validar profissional." },
+      { status: 500 },
+    );
+  }
+
+  if (!mappings || mappings.length === 0) {
     return NextResponse.json(
       { error: "Profissional nao atende esse servico." },
       { status: 400 },
@@ -82,6 +89,16 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Horario fora do funcionamento do salao." },
       { status: 400 },
+    );
+  }
+
+  const lunchInterval = getLunchInterval(dateKey);
+  const overlapsLunch = startsAt < lunchInterval.end && endsAt > lunchInterval.start;
+
+  if (overlapsLunch) {
+    return NextResponse.json(
+      { error: "Horário indisponível." },
+      { status: 409 },
     );
   }
 
