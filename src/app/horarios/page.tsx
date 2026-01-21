@@ -11,11 +11,7 @@ import { Screen } from "@/components/Screen";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = {
-  service?: string;
-  pro?: string;
-  day?: string;
-};
+type SearchParams = Record<string, string | string[] | undefined>;
 
 type ServiceRow = {
   id: string;
@@ -30,18 +26,37 @@ type ProfessionalRow = {
 export default async function HorariosPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
-  const serviceId = searchParams.service;
-  const professionalId = searchParams.pro;
+  const resolvedParams = await searchParams;
+  const getParam = (params: SearchParams, key: string) => {
+    const value = params[key];
+    return Array.isArray(value) ? value[0] : value;
+  };
+
+  const serviceParam = resolvedParams.service;
+  const proParam = resolvedParams.pro;
+  const serviceId = getParam(resolvedParams, "service");
+  const professionalId = getParam(resolvedParams, "pro");
+  const dayParam = getParam(resolvedParams, "day");
 
   if (!serviceId || !professionalId) {
+    const debugService = Array.isArray(serviceParam)
+      ? serviceParam.join(",")
+      : serviceParam ?? "undefined";
+    const debugPro = Array.isArray(proParam)
+      ? proParam.join(",")
+      : proParam ?? "undefined";
+
     return (
       <Screen>
         <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
           Voltar
         </Link>
         <p className="text-sm text-white/70">Parametros incompletos.</p>
+        <p className="text-xs text-white/50">
+          service={debugService} / pro={debugPro}
+        </p>
       </Screen>
     );
   }
@@ -65,7 +80,7 @@ export default async function HorariosPage({
   const days = Array.from({ length: 14 }, (_, index) => addDays(today, index));
 
   const selectedDate =
-    days.find((day) => formatDateKey(day) === searchParams.day) ??
+    days.find((day) => formatDateKey(day) === dayParam) ??
     days.find((day) => getBusinessHoursForDate(day, hoursData)) ??
     days[0];
 
