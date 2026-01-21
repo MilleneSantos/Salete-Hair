@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatMinutes } from "@/lib/datetime";
 import { Screen } from "@/components/Screen";
+import { Button } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
 
@@ -33,10 +33,13 @@ export default async function Home() {
         {(data ?? []).map((service) => {
           const duration = service.duration_minutes ?? undefined;
           return (
-            <Link
+            <Button
               key={service.id}
               href={`/profissional?service=${service.id}`}
-              className="flex min-h-[56px] items-center justify-between rounded-2xl border border-[#D4AF37]/60 px-4 py-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10"
+              variant="outline"
+              size="lg"
+              fullWidth
+              className="justify-between text-left"
             >
               <div>
                 <div className="text-base">{service.name ?? "Servico"}</div>
@@ -47,7 +50,7 @@ export default async function Home() {
                 ) : null}
               </div>
               <span className="text-lg text-[#D4AF37]">{">"}</span>
-            </Link>
+            </Button>
           );
         })}
       </div>

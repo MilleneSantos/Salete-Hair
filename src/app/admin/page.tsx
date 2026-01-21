@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatDateKey, formatLongDate } from "@/lib/datetime";
 import { AdminClient } from "@/components/admin-client";
 import { Screen } from "@/components/Screen";
+import { Button } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
 
@@ -89,9 +89,9 @@ export default async function AdminPage({
   return (
     <Screen>
       <header className="flex flex-col gap-2">
-        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
+        <Button href="/" variant="ghost">
           Voltar
-        </Link>
+        </Button>
         <h1 className="text-2xl font-semibold">Painel do salao</h1>
         <p className="text-sm text-white/70">
           {formatLongDate(new Date(`${selectedDate}T00:00:00-03:00`))}
@@ -125,12 +125,9 @@ export default async function AdminPage({
             )}
           </select>
         </label>
-        <button
-          type="submit"
-          className="min-h-[44px] rounded-2xl border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white active:opacity-90"
-        >
+        <Button type="submit" variant="secondary" size="lg" fullWidth>
           Atualizar
-        </button>
+        </Button>
       </form>
 
       <AdminClient

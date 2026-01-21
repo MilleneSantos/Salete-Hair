@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { Screen } from "@/components/Screen";
+import { Button } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +21,9 @@ export default async function ProfissionalPage({
   if (!serviceId) {
     return (
       <Screen>
-        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
+        <Button href="/" variant="ghost">
           Voltar
-        </Link>
+        </Button>
         <p className="text-sm text-white/70">Servico nao informado.</p>
       </Screen>
     );
@@ -54,9 +54,9 @@ export default async function ProfissionalPage({
   return (
     <Screen>
       <header className="flex flex-col gap-2">
-        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
+        <Button href="/" variant="ghost">
           Voltar
-        </Link>
+        </Button>
         <h1 className="text-2xl font-semibold">Escolha a profissional</h1>
         <p className="text-sm text-white/70">
           {service?.name
@@ -83,14 +83,17 @@ export default async function ProfissionalPage({
 
       <div className="flex flex-col gap-3">
         {(professionals ?? []).map((pro) => (
-          <Link
+          <Button
             key={pro.id}
             href={`/horarios?service=${serviceId}&pro=${pro.id}`}
-            className="flex min-h-[56px] items-center justify-between rounded-2xl border border-[#D4AF37]/60 px-4 py-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10"
+            variant="outline"
+            size="lg"
+            fullWidth
+            className="justify-between text-left"
           >
             <span className="text-base">{pro.name ?? "Profissional"}</span>
             <span className="text-lg text-[#D4AF37]">{">"}</span>
-          </Link>
+          </Button>
         ))}
         {!professionals?.length && !linksError && (
           <p className="text-sm text-white/70">

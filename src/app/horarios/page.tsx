@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
   addDays,
@@ -8,6 +7,7 @@ import {
 } from "@/lib/datetime";
 import { getAvailableSlots, getBusinessHoursForDate } from "@/lib/availability";
 import { Screen } from "@/components/Screen";
+import { Button } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
 
@@ -50,9 +50,9 @@ export default async function HorariosPage({
 
     return (
       <Screen>
-        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
+        <Button href="/" variant="ghost">
           Voltar
-        </Link>
+        </Button>
         <p className="text-sm text-white/70">Parametros incompletos.</p>
         <p className="text-xs text-white/50">
           service={debugService} / pro={debugPro}
@@ -97,12 +97,9 @@ export default async function HorariosPage({
   return (
     <Screen>
       <header className="flex flex-col gap-2">
-        <Link
-          href={`/profissional?service=${serviceId}`}
-          className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]"
-        >
+        <Button href={`/profissional?service=${serviceId}`} variant="ghost">
           Voltar
-        </Link>
+        </Button>
         <h1 className="text-2xl font-semibold">Escolha o horario</h1>
         <p className="text-sm text-white/70">
           {service?.name ?? "Servico"} com {professional?.name ?? "Profissional"}
@@ -117,20 +114,16 @@ export default async function HorariosPage({
           {openDays.map((day) => {
             const dayKey = formatDateKey(day);
             const isSelected = dayKey === selectedDateKey;
-            const baseClasses =
-              "rounded-2xl border px-3 py-2 text-xs transition-colors min-h-[44px] flex items-center justify-center bg-white/10 text-white/80 border-[#D4AF37]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:opacity-90";
-            const classes = isSelected
-              ? `${baseClasses} bg-[#D4AF37] text-black border-[#D4AF37]`
-              : baseClasses;
-
             return (
-              <Link
+              <Button
                 key={dayKey}
                 href={`/horarios?service=${serviceId}&pro=${professionalId}&day=${dayKey}`}
-                className={classes}
+                variant="outline"
+                selected={isSelected}
+                size="md"
               >
                 {formatDayLabel(day)}
-              </Link>
+              </Button>
             );
           })}
         </div>
@@ -152,13 +145,14 @@ export default async function HorariosPage({
         )}
         <div className="grid grid-cols-2 gap-3">
           {slots.map((slot) => (
-            <Link
+            <Button
               key={slot}
               href={`/confirmar?service=${serviceId}&pro=${professionalId}&day=${selectedDateKey}&time=${slot}`}
-              className="flex min-h-[44px] items-center justify-center rounded-2xl border border-[#D4AF37]/40 bg-white/10 px-2 text-center text-sm text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:opacity-90"
+              variant="outline"
+              fullWidth
             >
               {slot}
-            </Link>
+            </Button>
           ))}
         </div>
       </section>

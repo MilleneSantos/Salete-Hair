@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { formatLongDate } from "@/lib/datetime";
 import { Screen } from "@/components/Screen";
+import { Button } from "@/components/ui/Button";
 
 type ServiceRow = {
   id: string;
@@ -109,12 +109,9 @@ export function ConfirmarClient() {
   return (
     <Screen>
       <header className="flex flex-col gap-2">
-        <Link
-          href={`/horarios?service=${serviceId}&pro=${professionalId}`}
-          className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]"
-        >
+        <Button href={`/horarios?service=${serviceId}&pro=${professionalId}`} variant="ghost">
           Voltar
-        </Link>
+        </Button>
         <h1 className="text-2xl font-semibold">Confirmar agendamento</h1>
         <p className="text-sm text-white/70">
           {service?.name ?? "Servico"} com {professional?.name ?? "Profissional"}
@@ -162,13 +159,9 @@ export function ConfirmarClient() {
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="min-h-[44px] rounded-2xl border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white active:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <Button type="submit" variant="primary" size="lg" fullWidth loading={isSubmitting}>
             {isSubmitting ? "Confirmando..." : "Confirmar"}
-          </button>
+          </Button>
         </form>
     </Screen>
   );

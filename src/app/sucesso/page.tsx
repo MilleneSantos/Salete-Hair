@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { formatLongDate, formatTime } from "@/lib/datetime";
 import { Screen } from "@/components/Screen";
+import { Button } from "@/components/ui/Button";
 
 export const dynamic = "force-dynamic";
 
@@ -36,9 +36,9 @@ export default async function SucessoPage({
   if (!appointmentId) {
     return (
       <Screen>
-        <Link href="/" className="inline-flex min-h-[44px] items-center text-sm text-[#D4AF37]">
+        <Button href="/" variant="ghost">
           Voltar ao inicio
-        </Link>
+        </Button>
         <p className="text-sm text-white/70">Agendamento nao encontrado.</p>
       </Screen>
     );
@@ -114,23 +114,25 @@ export default async function SucessoPage({
       </div>
 
       {whatsappHref ? (
-        <a
+        <Button
           href={whatsappHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-[44px] items-center justify-center rounded-2xl border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-center text-sm font-semibold text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white active:opacity-90"
+          variant="primary"
+          size="lg"
+          fullWidth
         >
           Chamar no WhatsApp
-        </a>
+        </Button>
       ) : (
         <p className="text-sm text-white/70">
           Configure o numero do WhatsApp para habilitar o contato rapido.
         </p>
       )}
 
-      <Link href="/" className="inline-flex min-h-[44px] items-center justify-center text-center text-sm text-[#D4AF37]">
+      <Button href="/" variant="ghost" fullWidth>
         Fazer novo agendamento
-      </Link>
+      </Button>
     </Screen>
   );
 }

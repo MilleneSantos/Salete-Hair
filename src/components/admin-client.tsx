@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
 import { formatTime } from "@/lib/datetime";
 
 type AppointmentView = {
@@ -147,13 +148,15 @@ export function AdminClient({
           </p>
         )}
 
-        <button
+        <Button
           type="submit"
-          disabled={blockLoading}
-          className="min-h-[44px] rounded-2xl border border-[#D4AF37] bg-[#D4AF37] px-4 py-3 text-sm font-semibold text-black transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white active:opacity-90 disabled:opacity-60"
+          variant="primary"
+          size="lg"
+          fullWidth
+          loading={blockLoading}
         >
           {blockLoading ? "Bloqueando..." : "Criar bloqueio"}
-        </button>
+        </Button>
       </form>
 
       <div className="flex flex-col gap-3">
@@ -189,18 +192,24 @@ export function AdminClient({
                 {appointment.client_name ?? "Cliente"} ·{" "}
                 {appointment.client_phone ?? "-"}
               </div>
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="md"
+                fullWidth
+                className="mt-2 text-xs"
                 onClick={() => handleCancel(appointment.id)}
-                disabled={appointment.status === "cancelled" || cancelId === appointment.id}
-                className="mt-2 min-h-[44px] rounded-2xl border border-[#D4AF37]/60 px-4 py-2 text-xs text-[#D4AF37] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#D4AF37] active:bg-white/10 disabled:opacity-40"
+                disabled={
+                  appointment.status === "cancelled" ||
+                  cancelId === appointment.id
+                }
               >
                 {appointment.status === "cancelled"
                   ? "Cancelado"
                   : cancelId === appointment.id
                     ? "Cancelando..."
                     : "Cancelar"}
-              </button>
+              </Button>
             </div>
           );
         })}
