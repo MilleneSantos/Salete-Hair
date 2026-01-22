@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
-import { formatMinutes } from "@/lib/datetime";
 import { Screen } from "@/components/Screen";
 import { Button } from "@/components/ui/Button";
+import { ServiceSelectorClient } from "@/components/service-selector-client";
 
 export const dynamic = "force-dynamic";
 
@@ -74,33 +74,15 @@ export default async function ServicosPage({
         </p>
       )}
 
-      <div className="flex flex-col gap-3">
-        {(services as ServiceRow[] | null | undefined)?.map((service) => (
-          <Button
-            key={service.id}
-            href={`/profissional?service=${service.id}`}
-            variant="outline"
-            size="lg"
-            fullWidth
-            className="justify-between text-left"
-          >
-            <div>
-              <div className="text-base">{service.name ?? "Servico"}</div>
-              {service.duration_minutes ? (
-                <div className="text-xs text-white/60">
-                  {formatMinutes(service.duration_minutes)}
-                </div>
-              ) : null}
-            </div>
-            <span className="text-lg text-[#D4AF37]">{">"}</span>
-          </Button>
-        ))}
-        {!services?.length && !servicesError && (
+      {services?.length ? (
+        <ServiceSelectorClient services={services as ServiceRow[]} />
+      ) : (
+        !servicesError && (
           <p className="text-sm text-white/70">
             Nenhum servico encontrado nesta categoria.
           </p>
-        )}
-      </div>
+        )
+      )}
     </Screen>
   );
 }
