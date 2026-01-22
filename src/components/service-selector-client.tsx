@@ -54,13 +54,9 @@ export function ServiceSelectorClient({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-2xl border border-[#D4AF37]/30 bg-white/5 px-4 py-3 text-sm">
-        <div className="text-white/70">
-          Selecionados: {selectedIds.length}
-        </div>
-        <div className="text-white/70">
-          Tempo estimado: {formatMinutes(totalMinutes) || "0 min"}
-        </div>
+      <div className="rounded-2xl border border-[#D4AF37]/30 bg-white/5 px-4 py-3 text-sm text-white/70">
+        Selecionados: {selectedIds.length} / Tempo total:{" "}
+        {formatMinutes(totalMinutes) || "0 min"}
       </div>
 
       <div className="flex flex-col gap-3">
