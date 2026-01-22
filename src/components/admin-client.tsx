@@ -15,6 +15,13 @@ type AppointmentView = {
   service_name?: string | null;
   professional_name?: string | null;
   professional_id?: string | null;
+  items?: Array<{
+    service_name?: string | null;
+    professional_name?: string | null;
+    professional_id?: string | null;
+    starts_at?: string | null;
+    ends_at?: string | null;
+  }>;
 };
 
 type ProfessionalRow = {
@@ -182,12 +189,39 @@ export function AdminClient({
                   {appointment.status ?? "confirmado"}
                 </span>
               </div>
-              <div className="text-base font-semibold">
-                {appointment.service_name ?? "Servico"}
-              </div>
-              <div className="text-sm text-white/70">
-                {appointment.professional_name ?? "Profissional"}
-              </div>
+              {appointment.items?.length ? (
+                <div className="flex flex-col gap-2">
+                  {appointment.items.map((item, index) => {
+                    const itemStart = item.starts_at
+                      ? new Date(item.starts_at)
+                      : null;
+                    const itemEnd = item.ends_at ? new Date(item.ends_at) : null;
+                    const timeLabel =
+                      itemStart && itemEnd
+                        ? `${formatTime(itemStart)}–${formatTime(itemEnd)}`
+                        : "--:--";
+                    return (
+                      <div key={`${appointment.id}-${index}`}>
+                        <div className="text-base font-semibold">
+                          {timeLabel} {item.service_name ?? "Servico"}
+                        </div>
+                        <div className="text-sm text-white/70">
+                          {item.professional_name ?? "Profissional"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <>
+                  <div className="text-base font-semibold">
+                    {appointment.service_name ?? "Servico"}
+                  </div>
+                  <div className="text-sm text-white/70">
+                    {appointment.professional_name ?? "Profissional"}
+                  </div>
+                </>
+              )}
               <div className="text-sm">
                 {appointment.client_name ?? "Cliente"} ·{" "}
                 {appointment.client_phone ?? "-"}

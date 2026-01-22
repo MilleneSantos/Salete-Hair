@@ -16,6 +16,15 @@ type AppointmentRow = {
   professional_id?: string | null;
 };
 
+type AppointmentServiceRow = {
+  appointment_id?: string | null;
+  service_id?: string | null;
+  professional_id?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  order_index?: number | null;
+};
+
 type ServiceRow = {
   id: string;
   name?: string | null;
@@ -52,22 +61,71 @@ export default async function SucessoPage({
     .eq("id", appointmentId)
     .maybeSingle<AppointmentRow>();
 
-  const [{ data: service }, { data: professional }] = await Promise.all([
-    appointment?.service_id
+  const { data: appointmentServices } = await supabase
+    .from("appointment_services")
+    .select("appointment_id,service_id,professional_id,starts_at,ends_at,order_index")
+    .eq("appointment_id", appointmentId)
+    .order("order_index", { ascending: true });
+
+  const appointmentServiceIds =
+    appointmentServices?.map((item) => item.service_id).filter(Boolean) ?? [];
+  const appointmentProfessionalIds =
+    appointmentServices?.map((item) => item.professional_id).filter(Boolean) ?? [];
+
+  const [{ data: services }, { data: professionals }] = await Promise.all([
+    appointmentServiceIds.length
       ? supabase
           .from("services")
           .select("id,name")
-          .eq("id", appointment.service_id)
-          .maybeSingle<ServiceRow>()
-      : Promise.resolve({ data: null }),
-    appointment?.professional_id
+          .in("id", appointmentServiceIds)
+      : appointment?.service_id
+        ? supabase
+            .from("services")
+            .select("id,name")
+            .eq("id", appointment.service_id)
+        : Promise.resolve({ data: [] }),
+    appointmentProfessionalIds.length
       ? supabase
           .from("professionals")
           .select("id,name")
-          .eq("id", appointment.professional_id)
-          .maybeSingle<ProfessionalRow>()
-      : Promise.resolve({ data: null }),
+          .in("id", appointmentProfessionalIds)
+      : appointment?.professional_id
+        ? supabase
+            .from("professionals")
+            .select("id,name")
+            .eq("id", appointment.professional_id)
+        : Promise.resolve({ data: [] }),
   ]);
+
+  const serviceMap = new Map(
+    (services as ServiceRow[] | null | undefined)?.map((service) => [
+      service.id,
+      service.name ?? "",
+    ]) ?? [],
+  );
+  const professionalMap = new Map(
+    (professionals as ProfessionalRow[] | null | undefined)?.map((pro) => [
+      pro.id,
+      pro.name ?? "",
+    ]) ?? [],
+  );
+
+  const steps =
+    appointmentServices?.length
+      ? (appointmentServices as AppointmentServiceRow[]).map((item) => ({
+          service_id: item.service_id ?? "",
+          professional_id: item.professional_id ?? "",
+          starts_at: item.starts_at ? new Date(item.starts_at) : null,
+          ends_at: item.ends_at ? new Date(item.ends_at) : null,
+        }))
+      : [];
+
+  const fallbackServiceName = appointment?.service_id
+    ? serviceMap.get(appointment.service_id)
+    : "";
+  const fallbackProfessionalName = appointment?.professional_id
+    ? professionalMap.get(appointment.professional_id)
+    : "";
 
   const startDate = appointment?.starts_at
     ? new Date(appointment.starts_at)
@@ -76,10 +134,22 @@ export default async function SucessoPage({
     process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ??
     process.env.WHATSAPP_NUMBER ??
     "";
+  const servicesText = steps.length
+    ? steps
+        .map((step) => {
+          const serviceName = step.service_id
+            ? serviceMap.get(step.service_id) ?? "servico"
+            : "servico";
+          const professionalName = step.professional_id
+            ? professionalMap.get(step.professional_id) ?? "profissional"
+            : "profissional";
+          return `${serviceName} (${professionalName})`;
+        })
+        .join(", ")
+    : `${fallbackServiceName || "servico"} (${fallbackProfessionalName || "profissional"})`;
+
   const whatsappMessage = startDate
-    ? `Oi! Gostaria de confirmar meu horario para ${
-        service?.name ?? "servico"
-      } com ${professional?.name ?? "profissional"} em ${formatLongDate(
+    ? `Oi! Gostaria de confirmar meu horario para ${servicesText} em ${formatLongDate(
         startDate,
       )} as ${formatTime(startDate)}.`
     : "Oi! Gostaria de confirmar meu agendamento.";
@@ -101,10 +171,37 @@ export default async function SucessoPage({
       </header>
 
       <div className="rounded-2xl border border-[#D4AF37]/60 px-4 py-4">
-        <div className="text-sm text-white/70">Servico</div>
-        <div className="text-base">{service?.name ?? "-"}</div>
-        <div className="mt-3 text-sm text-white/70">Profissional</div>
-        <div className="text-base">{professional?.name ?? "-"}</div>
+        <div className="text-sm text-white/70">Resumo do agendamento</div>
+        {steps.length ? (
+          <div className="mt-3 flex flex-col gap-3 text-sm">
+            {steps.map((step, index) => {
+              const startLabel =
+                step.starts_at && step.ends_at
+                  ? `${formatTime(step.starts_at)}–${formatTime(step.ends_at)}`
+                  : "--:--";
+              const serviceName = step.service_id
+                ? serviceMap.get(step.service_id) ?? "Servico"
+                : "Servico";
+              const professionalName = step.professional_id
+                ? professionalMap.get(step.professional_id) ?? "Profissional"
+                : "Profissional";
+              return (
+                <div key={`${step.service_id}-${index}`}>
+                  <div className="text-white">
+                    {startLabel} {serviceName}
+                  </div>
+                  <div className="text-white/60">{professionalName}</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <>
+            <div className="mt-3 text-base">{fallbackServiceName || "-"}</div>
+            <div className="mt-3 text-sm text-white/70">Profissional</div>
+            <div className="text-base">{fallbackProfessionalName || "-"}</div>
+          </>
+        )}
         <div className="mt-3 text-sm text-white/70">Data e horario</div>
         <div className="text-base">
           {startDate

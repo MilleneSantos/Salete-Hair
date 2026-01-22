@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { getBusinessHoursForDate, getLunchInterval } from "@/lib/availability";
-import { toDateWithOffset } from "@/lib/datetime";
+import {
+  buildPackageSchedule,
+  getAvailablePackageSlots,
+} from "@/lib/availability";
 
 type Payload = {
   service_id?: string;
   professional_id?: string;
+  services?: string[] | string;
+  professionals?: string[] | string;
   client_name?: string;
   client_phone?: string;
   client_email?: string | null;
@@ -16,15 +20,51 @@ type Payload = {
 export async function POST(request: Request) {
   const payload = (await request.json()) as Payload;
 
-  const serviceId = payload.service_id?.trim();
-  const professionalId = payload.professional_id?.trim();
+  const normalizeList = (value?: string[] | string) => {
+    if (!value) {
+      return [];
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => item.trim()).filter(Boolean);
+    }
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  };
+
+  const serviceIds = payload.services?.length
+    ? normalizeList(payload.services)
+    : payload.service_id
+      ? [payload.service_id.trim()]
+      : [];
+  const professionalIds = payload.professionals?.length
+    ? normalizeList(payload.professionals)
+    : payload.professional_id
+      ? [payload.professional_id.trim()]
+      : [];
+
   const clientName = payload.client_name?.trim();
   const clientPhone = payload.client_phone?.trim();
   const clientEmail = payload.client_email?.trim() || null;
   const dateKey = payload.date?.trim();
   const time = payload.time?.trim();
 
-  if (!serviceId || !professionalId || !clientName || !clientPhone || !dateKey || !time) {
+  if (
+    serviceIds.length === 0 ||
+    professionalIds.length === 0 ||
+    !clientName ||
+    !clientPhone ||
+    !dateKey ||
+    !time
+  ) {
+    return NextResponse.json(
+      { error: "Dados obrigatorios ausentes." },
+      { status: 400 },
+    );
+  }
+
+  if (serviceIds.length !== professionalIds.length) {
     return NextResponse.json(
       { error: "Dados obrigatorios ausentes." },
       { status: 400 },
@@ -33,10 +73,9 @@ export async function POST(request: Request) {
 
   const { data: mappings, error: mappingError } = await supabase
     .from("service_professionals")
-    .select("id")
-    .eq("service_id", serviceId)
-    .eq("professional_id", professionalId)
-    .limit(1);
+    .select("service_id,professional_id")
+    .in("service_id", serviceIds)
+    .in("professional_id", professionalIds);
 
   if (mappingError) {
     return NextResponse.json(
@@ -45,95 +84,68 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!mappings || mappings.length === 0) {
+  const mappingSet = new Set(
+    (mappings ?? []).map(
+      (item) => `${item.service_id}|${item.professional_id}`,
+    ),
+  );
+  const invalidPair = serviceIds.find(
+    (serviceId, index) =>
+      !mappingSet.has(`${serviceId}|${professionalIds[index]}`),
+  );
+
+  if (invalidPair) {
     return NextResponse.json(
       { error: "Profissional nao atende esse servico." },
       { status: 400 },
     );
   }
 
-  const { data: service } = await supabase
+  const { data: services } = await supabase
     .from("services")
-    .select("duration_minutes")
-    .eq("id", serviceId)
-    .maybeSingle();
+    .select("id,duration_minutes")
+    .in("id", serviceIds);
 
-  const durationMinutes = service?.duration_minutes ?? 0;
+  const serviceMap = new Map(
+    (services ?? []).map((service) => [
+      service.id,
+      service.duration_minutes ?? 0,
+    ]),
+  );
+  const items = serviceIds.map((serviceId, index) => ({
+    service_id: serviceId,
+    professional_id: professionalIds[index],
+    duration_minutes: serviceMap.get(serviceId) ?? 0,
+  }));
 
-  if (!durationMinutes) {
+  if (items.some((item) => item.duration_minutes <= 0)) {
     return NextResponse.json(
       { error: "Duracao do servico nao definida." },
       { status: 400 },
     );
   }
 
-  const startsAt = toDateWithOffset(dateKey, time);
-  const endsAt = new Date(startsAt.getTime() + durationMinutes * 60 * 1000);
+  const availableSlots = await getAvailablePackageSlots({
+    dateKey,
+    items,
+  });
 
-  const { data: hoursData } = await supabase
-    .from("business_hours")
-    .select("*");
-  const hours = getBusinessHoursForDate(new Date(`${dateKey}T00:00:00-03:00`), hoursData);
-
-  if (!hours) {
+  if (!availableSlots.includes(time)) {
     return NextResponse.json(
-      { error: "Salao fechado neste dia." },
-      { status: 400 },
-    );
-  }
-
-  const openAt = toDateWithOffset(dateKey, hours.open);
-  const closeAt = toDateWithOffset(dateKey, hours.close);
-
-  if (startsAt < openAt || endsAt > closeAt) {
-    return NextResponse.json(
-      { error: "Horario fora do funcionamento do salao." },
-      { status: 400 },
-    );
-  }
-
-  const lunchInterval = getLunchInterval(dateKey);
-  const overlapsLunch = startsAt < lunchInterval.end && endsAt > lunchInterval.start;
-
-  if (overlapsLunch) {
-    return NextResponse.json(
-      { error: "Horário indisponível." },
+      { error: "Horario indisponivel." },
       { status: 409 },
     );
   }
 
-  const conflictRange = {
-    start: startsAt.toISOString(),
-    end: endsAt.toISOString(),
-  };
+  const schedule = buildPackageSchedule({
+    dateKey,
+    startTime: time,
+    items,
+  });
 
-  const { data: appointmentConflict } = await supabase
-    .from("appointments")
-    .select("id")
-    .eq("professional_id", professionalId)
-    .eq("status", "confirmed")
-    .lt("starts_at", conflictRange.end)
-    .gt("ends_at", conflictRange.start)
-    .limit(1);
-
-  if (appointmentConflict && appointmentConflict.length > 0) {
+  if (!schedule.startsAt || !schedule.endsAt) {
     return NextResponse.json(
-      { error: "Horario ja ocupado." },
-      { status: 409 },
-    );
-  }
-
-  const { data: blockConflict } = await supabase
-    .from("blocks")
-    .select("id")
-    .or(`professional_id.eq.${professionalId},professional_id.is.null`)
-    .lt("starts_at", conflictRange.end)
-    .gt("ends_at", conflictRange.start)
-    .limit(1);
-
-  if (blockConflict && blockConflict.length > 0) {
-    return NextResponse.json(
-      { error: "Horario bloqueado." },
+      { error: "Horario indisponivel." },
       { status: 409 },
     );
   }
@@ -141,13 +153,13 @@ export async function POST(request: Request) {
   const { data: inserted, error: insertError } = await supabase
     .from("appointments")
     .insert({
-      service_id: serviceId,
-      professional_id: professionalId,
+      service_id: serviceIds[0] ?? null,
+      professional_id: professionalIds[0] ?? null,
       client_name: clientName,
       client_phone: clientPhone,
       client_email: clientEmail,
-      starts_at: conflictRange.start,
-      ends_at: conflictRange.end,
+      starts_at: schedule.startsAt.toISOString(),
+      ends_at: schedule.endsAt.toISOString(),
       status: "confirmed",
     })
     .select("id")
@@ -156,6 +168,27 @@ export async function POST(request: Request) {
   if (insertError || !inserted) {
     return NextResponse.json(
       { error: "Erro ao salvar agendamento." },
+      { status: 500 },
+    );
+  }
+
+  const appointmentItems = schedule.steps.map((step) => ({
+    appointment_id: inserted.id,
+    service_id: step.service_id,
+    professional_id: step.professional_id,
+    starts_at: step.starts_at.toISOString(),
+    ends_at: step.ends_at.toISOString(),
+    order_index: step.order_index,
+    duration_minutes_snapshot: step.duration_minutes,
+  }));
+
+  const { error: itemsError } = await supabase
+    .from("appointment_services")
+    .insert(appointmentItems);
+
+  if (itemsError) {
+    return NextResponse.json(
+      { error: "Erro ao salvar itens do agendamento." },
       { status: 500 },
     );
   }

@@ -16,6 +16,15 @@ type ProfessionalRow = {
   name?: string | null;
 };
 
+type AppointmentServiceRow = {
+  appointment_id?: string | null;
+  service_id?: string | null;
+  professional_id?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  order_index?: number | null;
+};
+
 export default async function AdminPage({
   searchParams,
 }: {
@@ -28,7 +37,7 @@ export default async function AdminPage({
   const dayStart = new Date(`${selectedDate}T00:00:00-03:00`).toISOString();
   const dayEnd = new Date(`${selectedDate}T23:59:59-03:00`).toISOString();
 
-  let appointmentsQuery = supabase
+  const appointmentsQuery = supabase
     .from("appointments")
     .select(
       "id,client_name,client_phone,starts_at,ends_at,status,service_id,professional_id",
@@ -37,29 +46,42 @@ export default async function AdminPage({
     .gt("ends_at", dayStart)
     .order("starts_at", { ascending: true });
 
-  if (selectedProfessional !== "all") {
-    appointmentsQuery = appointmentsQuery.eq("professional_id", selectedProfessional);
-  }
-
   const [{ data: appointments }, { data: professionals }] = await Promise.all([
     appointmentsQuery,
     supabase.from("professionals").select("id,name").order("name"),
   ]);
 
+  const appointmentIds = appointments?.map((item) => item.id).filter(Boolean) ?? [];
+  const { data: appointmentItems } = appointmentIds.length
+    ? await supabase
+        .from("appointment_services")
+        .select("appointment_id,service_id,professional_id,starts_at,ends_at,order_index")
+        .in("appointment_id", appointmentIds)
+        .order("order_index", { ascending: true })
+    : { data: [] };
+
   const serviceIds =
     appointments?.map((item) => item.service_id).filter(Boolean) ?? [];
   const professionalIds =
     appointments?.map((item) => item.professional_id).filter(Boolean) ?? [];
+  const itemServiceIds =
+    appointmentItems?.map((item) => item.service_id).filter(Boolean) ?? [];
+  const itemProfessionalIds =
+    appointmentItems?.map((item) => item.professional_id).filter(Boolean) ?? [];
+  const allServiceIds = [...new Set([...serviceIds, ...itemServiceIds])];
+  const allProfessionalIds = [
+    ...new Set([...professionalIds, ...itemProfessionalIds]),
+  ];
 
   const [{ data: services }, { data: appointmentPros }] = await Promise.all([
-    serviceIds.length
-      ? supabase.from("services").select("id,name").in("id", serviceIds)
+    allServiceIds.length
+      ? supabase.from("services").select("id,name").in("id", allServiceIds)
       : Promise.resolve({ data: [] }),
-    professionalIds.length
+    allProfessionalIds.length
       ? supabase
           .from("professionals")
           .select("id,name")
-          .in("id", professionalIds)
+          .in("id", allProfessionalIds)
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -76,15 +98,62 @@ export default async function AdminPage({
     ]) ?? [],
   );
 
-  const viewAppointments = (appointments ?? []).map((appointment) => ({
-    ...appointment,
-    service_name: appointment.service_id
-      ? serviceMap.get(appointment.service_id) ?? ""
-      : "",
-    professional_name: appointment.professional_id
-      ? professionalMap.get(appointment.professional_id) ?? ""
-      : "",
-  }));
+  const itemsByAppointmentId = new Map(
+    (appointmentItems as AppointmentServiceRow[] | null | undefined)?.reduce<
+      Array<[string, AppointmentServiceRow[]]>
+    >((entries, item) => {
+      if (!item.appointment_id) {
+        return entries;
+      }
+      const existing = entries.find(([id]) => id === item.appointment_id);
+      if (existing) {
+        existing[1].push(item);
+      } else {
+        entries.push([item.appointment_id, [item]]);
+      }
+      return entries;
+    }, []) ?? [],
+  );
+
+  const viewAppointments = (appointments ?? [])
+    .map((appointment) => {
+      const items = itemsByAppointmentId.get(appointment.id) ?? [];
+      const mappedItems = items.map((item) => ({
+        service_id: item.service_id ?? "",
+        professional_id: item.professional_id ?? "",
+        starts_at: item.starts_at ?? null,
+        ends_at: item.ends_at ?? null,
+        service_name: item.service_id
+          ? serviceMap.get(item.service_id) ?? ""
+          : "",
+        professional_name: item.professional_id
+          ? professionalMap.get(item.professional_id) ?? ""
+          : "",
+      }));
+
+      return {
+        ...appointment,
+        service_name: appointment.service_id
+          ? serviceMap.get(appointment.service_id) ?? ""
+          : "",
+        professional_name: appointment.professional_id
+          ? professionalMap.get(appointment.professional_id) ?? ""
+          : "",
+        items: mappedItems,
+      };
+    })
+    .filter((appointment) => {
+      if (selectedProfessional === "all") {
+        return true;
+      }
+      if (appointment.professional_id === selectedProfessional) {
+        return true;
+      }
+      return appointment.items?.some(
+        (item: { professional_id?: string }) =>
+          item.professional_id === selectedProfessional,
+      );
+    });
 
   return (
     <Screen>
