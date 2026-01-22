@@ -170,7 +170,7 @@ export default async function SucessoPage({
         </p>
       </header>
 
-      <div className="rounded-2xl border border-[#D4AF37]/60 px-4 py-4">
+      <div className="rounded-2xl border border-[#D4AF37]/60 bg-white/5 px-4 py-4">
         <div className="text-sm text-white/70">Resumo do agendamento</div>
         {steps.length ? (
           <div className="mt-3 flex flex-col gap-3 text-sm">

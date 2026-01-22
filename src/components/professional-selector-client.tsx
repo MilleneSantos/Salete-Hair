@@ -143,7 +143,7 @@ export function ProfessionalSelectorClient({
         return (
           <div
             key={service.id}
-            className="rounded-2xl border border-white/10 px-4 py-4"
+            className="rounded-2xl border border-[#D4AF37]/20 bg-white/5 px-4 py-4"
           >
             <div className="text-sm text-white/70">Servico</div>
             <div className="text-base font-semibold">

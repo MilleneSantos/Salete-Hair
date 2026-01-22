@@ -95,7 +95,7 @@ export function AdminClient({
     <div className="flex flex-col gap-6">
       <form
         onSubmit={handleBlock}
-        className="flex flex-col gap-3 rounded-2xl border border-white/10 px-4 py-4"
+        className="flex flex-col gap-3 rounded-2xl border border-[#D4AF37]/20 bg-white/5 px-4 py-4"
       >
         <div className="text-sm font-semibold text-[#D4AF37]">
           Bloquear horario
@@ -179,7 +179,7 @@ export function AdminClient({
           return (
             <div
               key={appointment.id}
-              className="flex flex-col gap-2 rounded-2xl border border-white/10 px-4 py-4"
+              className="flex flex-col gap-2 rounded-2xl border border-[#D4AF37]/20 bg-white/5 px-4 py-4"
             >
               <div className="flex items-center justify-between text-sm">
                 <span className="text-[#D4AF37]">
