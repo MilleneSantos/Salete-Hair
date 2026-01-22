@@ -1,6 +1,7 @@
 export const TIME_ZONE = "America/Sao_Paulo";
 export const TIME_ZONE_OFFSET = "-03:00";
 export const SLOT_INTERVAL_MINUTES = 10;
+export const SERVICE_GAP_MINUTES = 10;
 
 export function addDays(date: Date, amount: number) {
   const next = new Date(date);

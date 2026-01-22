@@ -5,7 +5,7 @@ import {
   formatDayLabel,
   formatLongDate,
 } from "@/lib/datetime";
-import { getAvailableSlots, getBusinessHoursForDate } from "@/lib/availability";
+import { getAvailablePackageSlots, getBusinessHoursForDate } from "@/lib/availability";
 import { Screen } from "@/components/Screen";
 import { Button } from "@/components/ui/Button";
 
@@ -16,6 +16,7 @@ type SearchParams = Record<string, string | string[] | undefined>;
 type ServiceRow = {
   id: string;
   name?: string | null;
+  duration_minutes?: number | null;
 };
 
 type ProfessionalRow = {
@@ -35,18 +36,49 @@ export default async function HorariosPage({
   };
 
   const serviceParam = resolvedParams.service;
+  const servicesParam = resolvedParams.services;
   const proParam = resolvedParams.pro;
+  const prosParam = resolvedParams.pros;
   const serviceId = getParam(resolvedParams, "service");
+  const servicesValue = getParam(resolvedParams, "services");
   const professionalId = getParam(resolvedParams, "pro");
+  const prosValue = getParam(resolvedParams, "pros");
   const dayParam = getParam(resolvedParams, "day");
+  const categoryParam = getParam(resolvedParams, "category");
+  const toList = (value?: string | string[]) => {
+    if (!value) {
+      return [];
+    }
+    const raw = Array.isArray(value) ? value.join(",") : value;
+    return raw
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  };
+  const serviceIds = servicesValue
+    ? toList(servicesValue)
+    : serviceId
+      ? [serviceId]
+      : [];
+  const professionalIds = prosValue
+    ? toList(prosValue)
+    : professionalId
+      ? [professionalId]
+      : [];
 
-  if (!serviceId || !professionalId) {
+  if (serviceIds.length === 0 || professionalIds.length === 0) {
     const debugService = Array.isArray(serviceParam)
       ? serviceParam.join(",")
       : serviceParam ?? "undefined";
     const debugPro = Array.isArray(proParam)
       ? proParam.join(",")
       : proParam ?? "undefined";
+    const debugServices = Array.isArray(servicesParam)
+      ? servicesParam.join(",")
+      : servicesParam ?? "undefined";
+    const debugPros = Array.isArray(prosParam)
+      ? prosParam.join(",")
+      : prosParam ?? "undefined";
 
     return (
       <Screen>
@@ -55,26 +87,59 @@ export default async function HorariosPage({
         </Button>
         <p className="text-sm text-white/70">Parametros incompletos.</p>
         <p className="text-xs text-white/50">
-          service={debugService} / pro={debugPro}
+          service={debugService} / services={debugServices} / pro={debugPro} / pros={debugPros}
         </p>
       </Screen>
     );
   }
 
-  const [{ data: service }, { data: professional }, { data: hoursData }] =
+  if (serviceIds.length !== professionalIds.length) {
+    return (
+      <Screen>
+        <Button href="/" variant="ghost">
+          Voltar
+        </Button>
+        <p className="text-sm text-white/70">Parametros incompletos.</p>
+        <p className="text-xs text-white/50">
+          services={serviceIds.join(",")} / pros={professionalIds.join(",")}
+        </p>
+      </Screen>
+    );
+  }
+
+  const [{ data: services }, { data: professionals }, { data: hoursData }] =
     await Promise.all([
       supabase
         .from("services")
-        .select("id,name")
-        .eq("id", serviceId)
-        .maybeSingle<ServiceRow>(),
+        .select("id,name,duration_minutes")
+        .in("id", serviceIds),
       supabase
         .from("professionals")
         .select("id,name")
-        .eq("id", professionalId)
-        .maybeSingle<ProfessionalRow>(),
+        .in("id", professionalIds),
       supabase.from("business_hours").select("*"),
     ]);
+
+  const serviceMap = new Map(
+    (services as ServiceRow[] | null | undefined)?.map((service) => [
+      service.id,
+      service,
+    ]) ?? [],
+  );
+  const professionalMap = new Map(
+    (professionals as ProfessionalRow[] | null | undefined)?.map((pro) => [
+      pro.id,
+      pro,
+    ]) ?? [],
+  );
+  const orderedServices = serviceIds
+    .map((id) => serviceMap.get(id))
+    .filter(Boolean) as ServiceRow[];
+  const packageItems = serviceIds.map((service, index) => ({
+    service_id: service,
+    professional_id: professionalIds[index],
+    duration_minutes: serviceMap.get(service)?.duration_minutes ?? 0,
+  }));
 
   const today = new Date();
   const days = Array.from({ length: 14 }, (_, index) => addDays(today, index));
@@ -88,21 +153,25 @@ export default async function HorariosPage({
   const selectedDateKey = formatDateKey(selectedDate);
   const selectedHours = getBusinessHoursForDate(selectedDate, hoursData);
 
-  const slots = await getAvailableSlots(
-    professionalId,
-    serviceId,
-    selectedDateKey,
-  );
+  const slots = await getAvailablePackageSlots({
+    dateKey: selectedDateKey,
+    items: packageItems,
+  });
 
   return (
     <Screen>
       <header className="flex flex-col gap-2">
-        <Button href={`/profissional?service=${serviceId}`} variant="ghost">
+        <Button
+          href={`/profissional?services=${serviceIds.join(",")}${
+            categoryParam ? `&category=${categoryParam}` : ""
+          }`}
+          variant="ghost"
+        >
           Voltar
         </Button>
         <h1 className="text-2xl font-semibold">Escolha o horario</h1>
         <p className="text-sm text-white/70">
-          {service?.name ?? "Servico"} com {professional?.name ?? "Profissional"}
+          {orderedServices.length} servico(s) selecionado(s).
         </p>
       </header>
 
@@ -117,7 +186,11 @@ export default async function HorariosPage({
             return (
               <Button
                 key={dayKey}
-                href={`/horarios?service=${serviceId}&pro=${professionalId}&day=${dayKey}`}
+                href={`/horarios?services=${serviceIds.join(",")}&pros=${professionalIds.join(
+                  ",",
+                )}&day=${dayKey}${
+                  categoryParam ? `&category=${categoryParam}` : ""
+                }`}
                 variant="outline"
                 selected={isSelected}
                 size="md"
@@ -147,7 +220,11 @@ export default async function HorariosPage({
           {slots.map((slot) => (
             <Button
               key={slot}
-              href={`/confirmar?service=${serviceId}&pro=${professionalId}&day=${selectedDateKey}&time=${slot}`}
+              href={`/confirmar?services=${serviceIds.join(
+                ",",
+              )}&pros=${professionalIds.join(",")}&day=${selectedDateKey}&time=${slot}${
+                categoryParam ? `&category=${categoryParam}` : ""
+              }`}
               variant="outline"
               fullWidth
             >
