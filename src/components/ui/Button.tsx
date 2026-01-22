@@ -106,8 +106,8 @@ export function Button(props: ButtonProps | AnchorProps) {
     className,
   });
 
-  if ("href" in props && typeof props.href === "string") {
-    const { href, ...anchorProps } = props as AnchorProps;
+  if ("href" in rest && typeof rest.href === "string") {
+    const { href, ...anchorProps } = rest as AnchorProps;
     return (
       <a
         href={href}
@@ -121,7 +121,7 @@ export function Button(props: ButtonProps | AnchorProps) {
     );
   }
 
-  const { type = "button", ...buttonProps } = props as ButtonProps;
+  const { type = "button", ...buttonProps } = rest as ButtonProps;
 
   return (
     <button

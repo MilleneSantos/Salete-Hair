@@ -103,8 +103,8 @@ export function ButtonClient(props: ButtonProps | AnchorProps) {
     className,
   });
 
-  if ("href" in props && typeof props.href === "string") {
-    const { href, onClick, ...anchorProps } = props as AnchorProps;
+  if ("href" in rest && typeof rest.href === "string") {
+    const { href, onClick, ...anchorProps } = rest as AnchorProps;
 
     const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
       if (isDisabled) {
@@ -128,7 +128,7 @@ export function ButtonClient(props: ButtonProps | AnchorProps) {
     );
   }
 
-  const { type = "button", ...buttonProps } = props as ButtonProps;
+  const { type = "button", ...buttonProps } = rest as ButtonProps;
 
   return (
     <button
