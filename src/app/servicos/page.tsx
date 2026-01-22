@@ -75,7 +75,10 @@ export default async function ServicosPage({
       )}
 
       {services?.length ? (
-        <ServiceSelectorClient services={services as ServiceRow[]} />
+        <ServiceSelectorClient
+          services={services as ServiceRow[]}
+          categoryId={categoryId}
+        />
       ) : (
         !servicesError && (
           <p className="text-sm text-white/70">

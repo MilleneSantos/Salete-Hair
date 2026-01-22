@@ -1,24 +1,43 @@
 import { supabase } from "@/lib/supabase";
 import { Screen } from "@/components/Screen";
 import { Button } from "@/components/ui/Button";
+import { ProfessionalSelectorClient } from "@/components/professional-selector-client";
 
 export const dynamic = "force-dynamic";
 
 type ServiceRow = {
   id: string;
   name?: string | null;
+  duration_minutes?: number | null;
 };
 
 export default async function ProfissionalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ service?: string | string[] }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const resolvedParams = await searchParams;
-  const serviceParam = resolvedParams.service;
-  const serviceId = Array.isArray(serviceParam) ? serviceParam[0] : serviceParam;
+  const getParam = (key: string) => {
+    const value = resolvedParams[key];
+    return Array.isArray(value) ? value[0] : value;
+  };
+  const serviceParam = getParam("service");
+  const servicesParam = getParam("services");
+  const categoryParam = getParam("category");
+  const listFromParam = (value?: string) =>
+    value
+      ? value
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+  const serviceIds = servicesParam
+    ? listFromParam(servicesParam)
+    : serviceParam
+      ? [serviceParam]
+      : [];
 
-  if (!serviceId) {
+  if (serviceIds.length === 0) {
     return (
       <Screen>
         <Button href="/" variant="ghost">
@@ -29,16 +48,15 @@ export default async function ProfissionalPage({
     );
   }
 
-  const { data: service, error: serviceError } = await supabase
+  const { data: services, error: serviceError } = await supabase
     .from("services")
-    .select("id,name")
-    .eq("id", serviceId)
-    .maybeSingle<ServiceRow>();
+    .select("id,name,duration_minutes")
+    .in("id", serviceIds);
 
   const { data: serviceLinks, error: linksError } = await supabase
     .from("service_professionals")
-    .select("professional_id")
-    .eq("service_id", serviceId);
+    .select("service_id,professional_id")
+    .in("service_id", serviceIds);
 
   const professionalIds =
     serviceLinks?.map((item) => item.professional_id).filter(Boolean) ?? [];
@@ -51,17 +69,28 @@ export default async function ProfissionalPage({
         .order("name")
     : { data: [], error: null };
 
+  const serviceMap = new Map(
+    (services as ServiceRow[] | null | undefined)?.map((service) => [
+      service.id,
+      service,
+    ]) ?? [],
+  );
+  const orderedServices = serviceIds
+    .map((id) => serviceMap.get(id))
+    .filter(Boolean) as ServiceRow[];
+
   return (
     <Screen>
       <header className="flex flex-col gap-2">
-        <Button href="/" variant="ghost">
+        <Button
+          href={categoryParam ? `/servicos?category=${categoryParam}` : "/"}
+          variant="ghost"
+        >
           Voltar
         </Button>
-        <h1 className="text-2xl font-semibold">Escolha a profissional</h1>
+        <h1 className="text-2xl font-semibold">Quem vai fazer?</h1>
         <p className="text-sm text-white/70">
-          {service?.name
-            ? `Servico: ${service.name}`
-            : "Selecione uma profissional disponivel."}
+          Selecione a profissional para cada servico.
         </p>
       </header>
 
@@ -81,26 +110,18 @@ export default async function ProfissionalPage({
         </p>
       )}
 
-      <div className="flex flex-col gap-3">
-        {(professionals ?? []).map((pro) => (
-          <Button
-            key={pro.id}
-            href={`/horarios?service=${serviceId}&pro=${pro.id}`}
-            variant="outline"
-            size="lg"
-            fullWidth
-            className="justify-between text-left"
-          >
-            <span className="text-base">{pro.name ?? "Profissional"}</span>
-            <span className="text-lg text-[#D4AF37]">{">"}</span>
-          </Button>
-        ))}
-        {!professionals?.length && !linksError && (
-          <p className="text-sm text-white/70">
-            Nenhuma profissional cadastrada para este servico.
-          </p>
-        )}
-      </div>
+      {!professionals?.length && !linksError ? (
+        <p className="text-sm text-white/70">
+          Nenhuma profissional cadastrada para este servico.
+        </p>
+      ) : (
+        <ProfessionalSelectorClient
+          services={orderedServices}
+          professionals={(professionals ?? []) as { id: string; name?: string | null }[]}
+          links={(serviceLinks ?? []) as { service_id?: string | null; professional_id?: string | null }[]}
+          categoryId={categoryParam}
+        />
+      )}
     </Screen>
   );
 }

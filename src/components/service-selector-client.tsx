@@ -13,9 +13,13 @@ type ServiceOption = {
 
 type ServiceSelectorProps = {
   services: ServiceOption[];
+  categoryId?: string | null;
 };
 
-export function ServiceSelectorClient({ services }: ServiceSelectorProps) {
+export function ServiceSelectorClient({
+  services,
+  categoryId,
+}: ServiceSelectorProps) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -42,7 +46,10 @@ export function ServiceSelectorClient({ services }: ServiceSelectorProps) {
       return;
     }
     const query = selectedIds.join(",");
-    router.push(`/profissional?services=${encodeURIComponent(query)}`);
+    const categoryParam = categoryId ? `&category=${categoryId}` : "";
+    router.push(
+      `/profissional?services=${encodeURIComponent(query)}${categoryParam}`,
+    );
   };
 
   return (
