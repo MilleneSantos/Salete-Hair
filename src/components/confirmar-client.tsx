@@ -106,8 +106,21 @@ export function ConfirmarClient() {
     }));
   }, [paramsValid, serviceIds, professionalIds, serviceMap]);
 
+  const missingDurationService = useMemo(() => {
+    if (!paramsValid || services.length === 0) {
+      return null;
+    }
+    const missingId = serviceIds.find(
+      (serviceId) => (serviceMap.get(serviceId)?.duration_minutes ?? 0) <= 0,
+    );
+    if (!missingId) {
+      return null;
+    }
+    return serviceMap.get(missingId)?.name ?? "Servico";
+  }, [paramsValid, services.length, serviceIds, serviceMap]);
+
   const schedule = useMemo(() => {
-    if (!day || !time || packageItems.length === 0) {
+    if (!day || !time || packageItems.length === 0 || missingDurationService) {
       return null;
     }
     return buildPackageSchedule({
@@ -115,7 +128,7 @@ export function ConfirmarClient() {
       startTime: time,
       items: packageItems,
     });
-  }, [day, time, packageItems]);
+  }, [day, time, packageItems, missingDurationService]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -128,6 +141,11 @@ export function ConfirmarClient() {
 
     if (!paramsValid || !day || !time) {
       setError("Horario invalido. Volte e selecione novamente.");
+      return;
+    }
+
+    if (missingDurationService) {
+      setError(`Servico sem duracao configurada: ${missingDurationService}`);
       return;
     }
 
@@ -185,7 +203,11 @@ export function ConfirmarClient() {
         </p>
       </header>
 
-      {schedule?.steps?.length ? (
+      {missingDurationService ? (
+        <p className="rounded-2xl border border-red-500/60 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          Servico sem duracao configurada: {missingDurationService}
+        </p>
+      ) : schedule?.steps?.length ? (
         <div className="rounded-2xl border border-[#D4AF37]/30 bg-white/5 px-4 py-4">
           <div className="text-sm font-semibold text-[#D4AF37]">
             Resumo do pacote

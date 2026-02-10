@@ -4,6 +4,8 @@ import {
   formatDateKey,
   formatDayLabel,
   formatLongDate,
+  TIME_ZONE,
+  toDateWithOffset,
 } from "@/lib/datetime";
 import { getAvailablePackageSlots, getBusinessHoursForDate } from "@/lib/availability";
 import { Screen } from "@/components/Screen";
@@ -32,7 +34,7 @@ export default async function HorariosPage({
   const resolvedParams = await searchParams;
   const getParam = (params: SearchParams, key: string) => {
     const value = params[key];
-    return Array.isArray(value) ? value[0] : value;
+    return Array.isArray(value) ? value.join(",") : value;
   };
 
   const serviceParam = resolvedParams.service;
@@ -141,14 +143,19 @@ export default async function HorariosPage({
     duration_minutes: serviceMap.get(service)?.duration_minutes ?? 0,
   }));
 
-  const today = new Date();
-  const days = Array.from({ length: 14 }, (_, index) => addDays(today, index));
+  const now = new Date();
+  const tzNow = new Date(now.toLocaleString("en-US", { timeZone: TIME_ZONE }));
+  const todayKey = formatDateKey(tzNow);
+  const baseDate = toDateWithOffset(todayKey, "00:00");
+  const days = Array.from({ length: 14 }, (_, index) =>
+    addDays(baseDate, index),
+  );
   const openDays = days.filter((day) => getBusinessHoursForDate(day, hoursData));
   const dayFromParam = days.find((day) => formatDateKey(day) === dayParam);
   const dayFromParamHours = dayFromParam
     ? getBusinessHoursForDate(dayFromParam, hoursData)
     : null;
-  const fallbackDate = days[0] ?? today;
+  const fallbackDate = days[0] ?? baseDate;
   const selectedDate = (dayFromParamHours ? dayFromParam : openDays[0]) ?? fallbackDate;
   const selectedDateKey = formatDateKey(selectedDate);
   const selectedHours = getBusinessHoursForDate(selectedDate, hoursData);
@@ -194,6 +201,7 @@ export default async function HorariosPage({
                 variant="outline"
                 selected={isSelected}
                 size="md"
+                className="justify-start text-left items-start"
               >
                 {formatDayLabel(day)}
               </Button>
@@ -227,6 +235,7 @@ export default async function HorariosPage({
               }`}
               variant="outline"
               fullWidth
+              className="justify-start text-left items-start"
             >
               {slot}
             </Button>

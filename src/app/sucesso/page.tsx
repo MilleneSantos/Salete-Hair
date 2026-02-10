@@ -14,6 +14,7 @@ type AppointmentRow = {
   ends_at?: string | null;
   service_id?: string | null;
   professional_id?: string | null;
+  appointment_services?: AppointmentServiceRow[] | null;
 };
 
 type AppointmentServiceRow = {
@@ -23,6 +24,8 @@ type AppointmentServiceRow = {
   starts_at?: string | null;
   ends_at?: string | null;
   order_index?: number | null;
+  services?: { name?: string | null } | null;
+  professionals?: { name?: string | null } | null;
 };
 
 type ServiceRow = {
@@ -56,16 +59,17 @@ export default async function SucessoPage({
   const { data: appointment } = await supabase
     .from("appointments")
     .select(
-      "id,client_name,client_phone,client_email,starts_at,ends_at,service_id,professional_id",
+      "id,client_name,client_phone,client_email,starts_at,ends_at,service_id,professional_id,appointment_services(service_id,professional_id,starts_at,ends_at,order_index,services(name),professionals(name))",
     )
     .eq("id", appointmentId)
     .maybeSingle<AppointmentRow>();
 
-  const { data: appointmentServices } = await supabase
-    .from("appointment_services")
-    .select("appointment_id,service_id,professional_id,starts_at,ends_at,order_index")
-    .eq("appointment_id", appointmentId)
-    .order("order_index", { ascending: true });
+  const appointmentServices =
+    appointment?.appointment_services?.slice().sort((a, b) => {
+      const aOrder = a.order_index ?? 0;
+      const bOrder = b.order_index ?? 0;
+      return aOrder - bOrder;
+    }) ?? [];
 
   const appointmentServiceIds =
     appointmentServices?.map((item) => item.service_id).filter(Boolean) ?? [];
@@ -117,6 +121,8 @@ export default async function SucessoPage({
           professional_id: item.professional_id ?? "",
           starts_at: item.starts_at ? new Date(item.starts_at) : null,
           ends_at: item.ends_at ? new Date(item.ends_at) : null,
+          service_name: item.services?.name ?? "",
+          professional_name: item.professionals?.name ?? "",
         }))
       : [];
 
@@ -137,12 +143,14 @@ export default async function SucessoPage({
   const servicesText = steps.length
     ? steps
         .map((step) => {
-          const serviceName = step.service_id
-            ? serviceMap.get(step.service_id) ?? "servico"
-            : "servico";
-          const professionalName = step.professional_id
-            ? professionalMap.get(step.professional_id) ?? "profissional"
-            : "profissional";
+          const serviceName =
+            step.service_name ??
+            (step.service_id ? serviceMap.get(step.service_id) ?? "servico" : "servico");
+          const professionalName =
+            step.professional_name ??
+            (step.professional_id
+              ? professionalMap.get(step.professional_id) ?? "profissional"
+              : "profissional");
           return `${serviceName} (${professionalName})`;
         })
         .join(", ")
@@ -180,10 +188,12 @@ export default async function SucessoPage({
                   ? `${formatTime(step.starts_at)}–${formatTime(step.ends_at)}`
                   : "--:--";
               const serviceName = step.service_id
-                ? serviceMap.get(step.service_id) ?? "Servico"
+                ? step.service_name ??
+                  (serviceMap.get(step.service_id) ?? "Servico")
                 : "Servico";
               const professionalName = step.professional_id
-                ? professionalMap.get(step.professional_id) ?? "Profissional"
+                ? step.professional_name ??
+                  (professionalMap.get(step.professional_id) ?? "Profissional")
                 : "Profissional";
               return (
                 <div key={`${step.service_id}-${index}`}>

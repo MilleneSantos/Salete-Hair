@@ -2,7 +2,9 @@ import { supabase } from "@/lib/supabase";
 import {
   SERVICE_GAP_MINUTES,
   SLOT_INTERVAL_MINUTES,
+  TIME_ZONE,
   TIME_ZONE_OFFSET,
+  formatDateKey,
   formatTime,
   timeToMinutes,
   toDateWithOffset,
@@ -328,39 +330,22 @@ export async function getAvailablePackageSlots(options: {
     new Set(items.map((item) => item.professional_id).filter(Boolean)),
   );
 
-  const [{ data: appointments }, { data: appointmentServices }, { data: blocks }] =
-    await Promise.all([
-      professionalIds.length
-        ? supabase
-            .from("appointments")
-            .select("professional_id,starts_at,ends_at")
-            .eq("status", "confirmed")
-            .in("professional_id", professionalIds)
-            .lt("starts_at", dayEnd)
-            .gt("ends_at", dayStart)
-        : Promise.resolve({ data: [] }),
-      professionalIds.length
-        ? supabase
-            .from("appointment_services")
-            .select("professional_id,starts_at,ends_at")
-            .in("professional_id", professionalIds)
-            .lt("starts_at", dayEnd)
-            .gt("ends_at", dayStart)
-        : Promise.resolve({ data: [] }),
-      supabase
-        .from("blocks")
-        .select("professional_id,starts_at,ends_at")
-        .lt("starts_at", dayEnd)
-        .gt("ends_at", dayStart),
-    ]);
+  const [{ data: appointmentServices }, { data: blocks }] = await Promise.all([
+    professionalIds.length
+      ? supabase
+          .from("appointment_services")
+          .select("appointment_id,professional_id,starts_at,ends_at")
+          .in("professional_id", professionalIds)
+          .lt("starts_at", dayEnd)
+          .gt("ends_at", dayStart)
+      : Promise.resolve({ data: [] }),
+    supabase
+      .from("blocks")
+      .select("professional_id,starts_at,ends_at")
+      .lt("starts_at", dayEnd)
+      .gt("ends_at", dayStart),
+  ]);
 
-  const appointmentMap = groupIntervalsByProfessional(
-    (appointments ?? []) as Array<{
-      professional_id?: string | null;
-      starts_at?: string | null;
-      ends_at?: string | null;
-    }>,
-  );
   const appointmentServiceMap = groupIntervalsByProfessional(
     (appointmentServices ?? []) as Array<{
       professional_id?: string | null;
@@ -368,6 +353,29 @@ export async function getAvailablePackageSlots(options: {
       ends_at?: string | null;
     }>,
   );
+
+  const missingProfessionalIds = professionalIds.filter(
+    (id) => !(appointmentServiceMap.get(id)?.length ?? 0),
+  );
+
+  let legacyAppointmentMap = new Map<string, Interval[]>();
+  if (missingProfessionalIds.length) {
+    const { data: legacyAppointments } = await supabase
+      .from("appointments")
+      .select("professional_id,starts_at,ends_at")
+      .eq("status", "confirmed")
+      .in("professional_id", missingProfessionalIds)
+      .lt("starts_at", dayEnd)
+      .gt("ends_at", dayStart);
+
+    legacyAppointmentMap = groupIntervalsByProfessional(
+      (legacyAppointments ?? []) as Array<{
+        professional_id?: string | null;
+        starts_at?: string | null;
+        ends_at?: string | null;
+      }>,
+    );
+  }
   const { byProfessional: blockMap, general: generalBlocks } = groupBlocks(
     (blocks ?? []) as Array<{
       professional_id?: string | null;
@@ -378,9 +386,12 @@ export async function getAvailablePackageSlots(options: {
 
   const intervalsByProfessional = new Map<string, Interval[]>();
   professionalIds.forEach((id) => {
+    const serviceIntervals = appointmentServiceMap.get(id) ?? [];
+    const legacyIntervals =
+      serviceIntervals.length > 0 ? [] : legacyAppointmentMap.get(id) ?? [];
     const intervals = [
-      ...(appointmentMap.get(id) ?? []),
-      ...(appointmentServiceMap.get(id) ?? []),
+      ...serviceIntervals,
+      ...legacyIntervals,
       ...(blockMap.get(id) ?? []),
       ...generalBlocks,
     ];
@@ -393,6 +404,17 @@ export async function getAvailablePackageSlots(options: {
   const stepMs = SLOT_INTERVAL_MINUTES * 60 * 1000;
   const totalMs = totalMinutes * 60 * 1000;
   const gapMs = SERVICE_GAP_MINUTES * 60 * 1000;
+  const now = new Date();
+  const tzNow = new Date(now.toLocaleString("en-US", { timeZone: TIME_ZONE }));
+  const todayKey = formatDateKey(tzNow);
+  const nowTime = new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: TIME_ZONE,
+  }).format(now);
+  const nowDate = toDateWithOffset(todayKey, nowTime);
+  const filterToday = dateKey === todayKey;
 
   const slots: string[] = [];
 
@@ -409,6 +431,11 @@ export async function getAvailablePackageSlots(options: {
       const stepEnd = new Date(
         cursor + item.duration_minutes * 60 * 1000,
       );
+
+      if (filterToday && stepStart < nowDate) {
+        isValid = false;
+        break;
+      }
 
       if (stepStart < lunchInterval.end && stepEnd > lunchInterval.start) {
         isValid = false;

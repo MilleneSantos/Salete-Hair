@@ -23,6 +23,8 @@ type AppointmentServiceRow = {
   starts_at?: string | null;
   ends_at?: string | null;
   order_index?: number | null;
+  services?: { name?: string | null } | null;
+  professionals?: { name?: string | null } | null;
 };
 
 export default async function AdminPage({
@@ -40,7 +42,7 @@ export default async function AdminPage({
   const appointmentsQuery = supabase
     .from("appointments")
     .select(
-      "id,client_name,client_phone,starts_at,ends_at,status,service_id,professional_id",
+      "id,client_name,client_phone,starts_at,ends_at,status,service_id,professional_id,appointment_services(service_id,professional_id,starts_at,ends_at,order_index,services(name),professionals(name))",
     )
     .lt("starts_at", dayEnd)
     .gt("ends_at", dayStart)
@@ -51,23 +53,20 @@ export default async function AdminPage({
     supabase.from("professionals").select("id,name").order("name"),
   ]);
 
-  const appointmentIds = appointments?.map((item) => item.id).filter(Boolean) ?? [];
-  const { data: appointmentItems } = appointmentIds.length
-    ? await supabase
-        .from("appointment_services")
-        .select("appointment_id,service_id,professional_id,starts_at,ends_at,order_index")
-        .in("appointment_id", appointmentIds)
-        .order("order_index", { ascending: true })
-    : { data: [] };
-
   const serviceIds =
     appointments?.map((item) => item.service_id).filter(Boolean) ?? [];
   const professionalIds =
     appointments?.map((item) => item.professional_id).filter(Boolean) ?? [];
   const itemServiceIds =
-    appointmentItems?.map((item) => item.service_id).filter(Boolean) ?? [];
+    appointments
+      ?.flatMap((appointment) => appointment.appointment_services ?? [])
+      .map((item) => item.service_id)
+      .filter(Boolean) ?? [];
   const itemProfessionalIds =
-    appointmentItems?.map((item) => item.professional_id).filter(Boolean) ?? [];
+    appointments
+      ?.flatMap((appointment) => appointment.appointment_services ?? [])
+      .map((item) => item.professional_id)
+      .filter(Boolean) ?? [];
   const allServiceIds = [...new Set([...serviceIds, ...itemServiceIds])];
   const allProfessionalIds = [
     ...new Set([...professionalIds, ...itemProfessionalIds]),
@@ -98,37 +97,24 @@ export default async function AdminPage({
     ]) ?? [],
   );
 
-  const itemsByAppointmentId = new Map(
-    (appointmentItems as AppointmentServiceRow[] | null | undefined)?.reduce<
-      Array<[string, AppointmentServiceRow[]]>
-    >((entries, item) => {
-      if (!item.appointment_id) {
-        return entries;
-      }
-      const existing = entries.find(([id]) => id === item.appointment_id);
-      if (existing) {
-        existing[1].push(item);
-      } else {
-        entries.push([item.appointment_id, [item]]);
-      }
-      return entries;
-    }, []) ?? [],
-  );
-
   const viewAppointments = (appointments ?? [])
     .map((appointment) => {
-      const items = itemsByAppointmentId.get(appointment.id) ?? [];
+      const items =
+        (appointment.appointment_services as AppointmentServiceRow[] | null | undefined) ??
+        [];
       const mappedItems = items.map((item) => ({
         service_id: item.service_id ?? "",
         professional_id: item.professional_id ?? "",
         starts_at: item.starts_at ?? null,
         ends_at: item.ends_at ?? null,
-        service_name: item.service_id
-          ? serviceMap.get(item.service_id) ?? ""
-          : "",
-        professional_name: item.professional_id
-          ? professionalMap.get(item.professional_id) ?? ""
-          : "",
+        service_name:
+          item.services?.name ??
+          (item.service_id ? serviceMap.get(item.service_id) ?? "" : ""),
+        professional_name:
+          item.professionals?.name ??
+          (item.professional_id
+            ? professionalMap.get(item.professional_id) ?? ""
+            : ""),
       }));
 
       return {

@@ -5,6 +5,12 @@ import {
   getAvailablePackageSlots,
 } from "@/lib/availability";
 
+const logDev = (...args: unknown[]) => {
+  if (process.env.NODE_ENV !== "production") {
+    console.error(...args);
+  }
+};
+
 type Payload = {
   service_id?: string;
   professional_id?: string;
@@ -78,6 +84,7 @@ export async function POST(request: Request) {
     .in("professional_id", professionalIds);
 
   if (mappingError) {
+    logDev("service_professionals error", mappingError);
     return NextResponse.json(
       { error: "Erro ao validar profissional." },
       { status: 500 },
@@ -95,6 +102,10 @@ export async function POST(request: Request) {
   );
 
   if (invalidPair) {
+    logDev("invalid service/professional pair", {
+      serviceIds,
+      professionalIds,
+    });
     return NextResponse.json(
       { error: "Profissional nao atende esse servico." },
       { status: 400 },
@@ -119,8 +130,9 @@ export async function POST(request: Request) {
   }));
 
   if (items.some((item) => item.duration_minutes <= 0)) {
+    logDev("missing duration", { serviceIds, items });
     return NextResponse.json(
-      { error: "Duracao do servico nao definida." },
+      { error: "Servico sem duracao configurada." },
       { status: 400 },
     );
   }
@@ -150,48 +162,50 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: inserted, error: insertError } = await supabase
-    .from("appointments")
-    .insert({
-      service_id: serviceIds[0] ?? null,
-      professional_id: professionalIds[0] ?? null,
+  const appointmentItems = schedule.steps.map((step) => ({
+    service_id: step.service_id,
+    professional_id: step.professional_id,
+    starts_at: step.starts_at.toISOString(),
+    ends_at: step.ends_at.toISOString(),
+    sort_order: step.order_index,
+  }));
+
+  const { data: rpcData, error: rpcError } = await supabase.rpc(
+    "create_appointment_with_items",
+    {
       client_name: clientName,
       client_phone: clientPhone,
       client_email: clientEmail,
+      status: "confirmed",
       starts_at: schedule.startsAt.toISOString(),
       ends_at: schedule.endsAt.toISOString(),
-      status: "confirmed",
-    })
-    .select("id")
-    .single();
+      items: appointmentItems,
+    },
+  );
 
-  if (insertError || !inserted) {
+  if (rpcError) {
+    logDev("create_appointment_with_items error", rpcError);
     return NextResponse.json(
       { error: "Erro ao salvar agendamento." },
       { status: 500 },
     );
   }
 
-  const appointmentItems = schedule.steps.map((step) => ({
-    appointment_id: inserted.id,
-    service_id: step.service_id,
-    professional_id: step.professional_id,
-    starts_at: step.starts_at.toISOString(),
-    ends_at: step.ends_at.toISOString(),
-    order_index: step.order_index,
-    duration_minutes_snapshot: step.duration_minutes,
-  }));
+  const appointmentId =
+    (rpcData as { appointment_id?: string } | null)?.appointment_id ??
+    (rpcData as { id?: string } | null)?.id ??
+    (Array.isArray(rpcData)
+      ? (rpcData[0] as { appointment_id?: string; id?: string })?.appointment_id ??
+        (rpcData[0] as { appointment_id?: string; id?: string })?.id
+      : null);
 
-  const { error: itemsError } = await supabase
-    .from("appointment_services")
-    .insert(appointmentItems);
-
-  if (itemsError) {
+  if (!appointmentId) {
+    logDev("create_appointment_with_items missing id", rpcData);
     return NextResponse.json(
-      { error: "Erro ao salvar itens do agendamento." },
+      { error: "Erro ao salvar agendamento." },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ id: inserted.id });
+  return NextResponse.json({ id: appointmentId });
 }

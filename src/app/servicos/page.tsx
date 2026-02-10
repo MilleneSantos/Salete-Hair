@@ -51,8 +51,26 @@ export default async function ServicosPage({
         .from("services")
         .select("id,name,duration_minutes")
         .eq("category_id", categoryId)
+        .not("category_id", "is", null)
         .order("name"),
     ]);
+
+  if (process.env.NODE_ENV !== "production" && category?.name) {
+    const categoryName = category.name.toLowerCase();
+    if (categoryName === "unhas") {
+      const { data: wrongServices } = await supabase
+        .from("services")
+        .select("id,name,category_id")
+        .neq("category_id", categoryId)
+        .or("name.ilike.unha%,name.ilike.mão%,name.ilike.mao%,name.ilike.pé%,name.ilike.pe%");
+      if (wrongServices?.length) {
+        console.warn(
+          "[DEV] Servicos com possivel categoria incorreta (Unhas):",
+          wrongServices,
+        );
+      }
+    }
+  }
 
   return (
     <Screen>
@@ -78,6 +96,7 @@ export default async function ServicosPage({
         <ServiceSelectorClient
           services={services as ServiceRow[]}
           categoryId={categoryId}
+          categoryName={category?.name ?? null}
         />
       ) : (
         !servicesError && (

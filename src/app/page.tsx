@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { Screen } from "@/components/Screen";
 import { Button } from "@/components/ui/Button";
+import { PackageBarClient } from "@/components/package-bar-client";
 
 export const dynamic = "force-dynamic";
 
@@ -37,19 +38,21 @@ export default async function Home() {
 
       <div className="flex flex-col gap-3">
         {(data as CategoryRow[] | null | undefined)?.map((category) => (
-          <Button
-            key={category.id}
-            href={`/servicos?category=${category.id}`}
-            variant="outline"
-            size="lg"
-            fullWidth
-            className="justify-between text-left"
-          >
-            <span className="text-base">{category.name ?? "Categoria"}</span>
-            <span className="text-lg text-[#D4AF37]">{">"}</span>
-          </Button>
+            <Button
+              key={category.id}
+              href={`/servicos?category=${category.id}`}
+              variant="outline"
+              size="lg"
+              fullWidth
+              className="justify-between text-left items-start"
+            >
+              <span className="text-base">{category.name ?? "Categoria"}</span>
+              <span className="text-lg text-[#D4AF37]">{">"}</span>
+            </Button>
         ))}
       </div>
+
+      <PackageBarClient />
     </Screen>
   );
 }

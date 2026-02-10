@@ -128,6 +128,7 @@ export function ProfessionalSelectorClient({
                   type="button"
                   variant="outline"
                   selected={selected}
+                  className="justify-start text-left items-start"
                   onClick={() => setAllToProfessional(id)}
                 >
                   {pro.name ?? "Profissional"}
@@ -162,6 +163,7 @@ export function ProfessionalSelectorClient({
                     type="button"
                     variant="outline"
                     selected={selected}
+                    className="justify-start text-left items-start"
                     onClick={() =>
                       setSelection((prev) => ({
                         ...prev,
